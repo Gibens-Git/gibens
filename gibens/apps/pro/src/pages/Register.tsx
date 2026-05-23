@@ -1,0 +1,94 @@
+import { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { signUp, supabase } from '@gibens/supabase'
+import { CATEGORIES } from '@gibens/ui'
+
+export default function Register() {
+  const nav = useNavigate()
+  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', category: '', radius: '15' })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true); setError('')
+    const { data, error: err } = await signUp(form.email, form.password, form.name, 'vendor')
+    if (err) { setError(err.message); setLoading(false); return }
+
+    if (data.session && data.user) {
+      // Email confirmation disabled — session available immediately
+      await supabase.from('users').insert({ id: data.user.id, role: 'vendor', full_name: form.name, phone: form.phone || null })
+      await supabase.from('vendor_profiles').insert({ user_id: data.user.id, category: form.category, travel_radius_mi: parseInt(form.radius), status: 'pending' })
+      nav('/')
+    } else {
+      // Email confirmation required — show confirmation screen
+      setEmailSent(true)
+      setLoading(false)
+    }
+  }
+
+  if (emailSent) return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 24, background: '#0F4C8A' }}>
+      <div style={{ background: '#fff', borderRadius: 16, padding: 32, textAlign: 'center' }}>
+        <i className="ti ti-mail-check" style={{ fontSize: 48, color: '#0F4C8A', display: 'block', marginBottom: 16 }} />
+        <h2 style={{ fontSize: 20, fontWeight: 500, marginBottom: 8 }}>Check your email</h2>
+        <p style={{ color: '#666', fontSize: 14, lineHeight: 1.5 }}>
+          We sent a confirmation link to <strong>{form.email}</strong>.<br />
+          Click it to activate your vendor account, then come back and sign in.
+        </p>
+        <button onClick={() => nav('/login')} style={{ marginTop: 24, background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 28px', fontSize: 15, cursor: 'pointer' }}>
+          Go to sign in
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 24, background: '#0F4C8A' }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 500, color: '#fff' }}>Gibens <span style={{ opacity: 0.7, fontSize: 16, background: 'rgba(255,255,255,0.15)', padding: '2px 10px', borderRadius: 20 }}>Pro</span></h1>
+        <p style={{ color: 'rgba(255,255,255,0.7)', marginTop: 6, fontSize: 15 }}>Join as a service provider</p>
+      </div>
+      <div style={{ background: '#fff', borderRadius: 16, padding: 24 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {[
+            { label: 'Full name', key: 'name', type: 'text', placeholder: 'Ricardo Castillo' },
+            { label: 'Email', key: 'email', type: 'email', placeholder: 'you@example.com' },
+            { label: 'Phone', key: 'phone', type: 'tel', placeholder: '+1 (619) 555-0100' },
+            { label: 'Password', key: 'password', type: 'password', placeholder: '••••••••' },
+          ].map(f => (
+            <div key={f.key}>
+              <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>{f.label}</label>
+              <input type={f.type} required={f.key !== 'phone'} value={(form as Record<string,string>)[f.key]} onChange={set(f.key)}
+                style={{ width: '100%', padding: '10px 14px', border: '0.5px solid #ccc', borderRadius: 10, fontSize: 15 }} placeholder={f.placeholder} />
+            </div>
+          ))}
+          <div>
+            <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>Your service category</label>
+            <select required value={form.category} onChange={set('category')}
+              style={{ width: '100%', padding: '10px 14px', border: '0.5px solid #ccc', borderRadius: 10, fontSize: 15 }}>
+              <option value="">Select your category...</option>
+              {CATEGORIES.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>Travel radius: {form.radius} miles</label>
+            <input type="range" min="5" max="100" step="5" value={form.radius} onChange={set('radius')} style={{ width: '100%' }} />
+          </div>
+          {error && <p style={{ color: '#E24B4A', fontSize: 13 }}>{error}</p>}
+          <button type="submit" disabled={loading}
+            style={{ background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 500, marginTop: 4 }}>
+            {loading ? 'Creating account...' : 'Create vendor account'}
+          </button>
+        </form>
+        <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: '#888' }}>
+          Already have an account? <Link to="/login" style={{ color: '#0F4C8A', fontWeight: 500 }}>Sign in</Link>
+        </p>
+      </div>
+    </div>
+  )
+}

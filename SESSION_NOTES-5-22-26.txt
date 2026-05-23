@@ -1,0 +1,205 @@
+================================================================================
+GIBENS PLATFORM — SESSION NOTES
+Date: 2026-05-22
+================================================================================
+
+PROJECT STRUCTURE
+-----------------
+Monorepo at: C:\gibens\gibens\gibens
+- apps/customer   → http://localhost:5173  (React, Vite)
+- apps/pro        → http://localhost:5174  (React, Vite)
+- apps/admin      → http://localhost:5175  (React, Vite)
+- packages/supabase/src/queries.ts  → shared Supabase query helpers
+- packages/ui/src                   → shared UI utilities
+- supabase/migrations/001_initial_schema.sql → full DB schema
+
+Start all apps (run each in a separate terminal from repo root):
+  npm run dev --workspace=apps/customer
+  npm run dev --workspace=apps/pro
+  npm run dev --workspace=apps/admin
+
+
+================================================================================
+FIXES APPLIED THIS SESSION
+================================================================================
+
+---- ALL THREE APPS ----
+
+1. TABLER ICONS + FONTS
+   Added to index.html in all three apps:
+   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.22.0/dist/tabler-icons.min.css" />
+
+2. AUTH PROVIDER CONTEXT (fixes redirect-to-login on navigation)
+   Root cause: each component had its own useAuth() hook instance with its own
+   Supabase subscription. When components unmounted during navigation, auth state
+   could briefly go null, triggering PrivateRoute to redirect to /login.
+
+   Fix: Created a single AuthProvider context for each app:
+   - apps/customer/src/contexts/AuthContext.tsx
+   - apps/pro/src/contexts/AuthContext.tsx
+   - apps/admin/src/contexts/AuthContext.tsx
+
+   Each app's main.tsx wraps the app:
+     <AuthProvider><BrowserRouter><App /></BrowserRouter></AuthProvider>
+
+   Each app's hooks/useAuth.ts now just re-exports:
+     export { useAuth } from '../contexts/AuthContext'
+
+   AuthContext features:
+   - Single onAuthStateChange subscription for the whole app
+   - 8-second timeout on fetchProfile (prevents infinite loading)
+   - Auto-creates users row from auth metadata if missing after email confirmation
+   - try/catch/finally ensures setLoading(false) always runs
+
+3. LAYOUT — REMOVED 480px CONSTRAINT
+   apps/customer/src/components/Layout.tsx — removed maxWidth: 480, margin: '0 auto'
+   apps/pro/src/components/Layout.tsx     — removed maxWidth: 480, margin: '0 auto'
+   Both now full-width with frosted glass bottom nav (backdrop-filter: blur)
+
+
+---- CUSTOMER APP ----
+
+4. REGISTER PAGE (apps/customer/src/pages/Register.tsx)
+   - Checks data.session after signUp
+   - If session exists: inserts users row and navigates to home
+   - If no session (email confirmation required): shows "check your email" screen
+   - Prevents silent failure when email confirmation is enabled in Supabase
+
+5. POST JOB (apps/customer/src/pages/PostJob.tsx)
+   - Added Nominatim (OpenStreetMap) geocoding fallback when GPS unavailable:
+     fetches https://nominatim.openstreetmap.org/search for the typed address
+   - notify-vendors edge function call is now fire-and-forget (non-blocking)
+
+6. CREATEJOB QUERY (packages/supabase/src/queries.ts)
+   - Fixed: no longer spreads job object (lat/lon columns don't exist in DB)
+   - Now explicitly maps each field, uses: location: `POINT(${job.lon} ${job.lat})`
+
+7. JOB DETAIL (apps/customer/src/pages/JobDetail.tsx)
+   - Split into two separate queries to avoid INNER JOIN RLS issues:
+     getJobDetail(jobId)      → select('*').maybeSingle()
+     getJobBidsDetail(jobId)  → separate bids query with vendor_profiles join
+   - Uses Promise.all([getJobDetail, getJobBidsDetail])
+
+
+---- PRO APP ----
+
+8. REGISTER PAGE (apps/pro/src/pages/Register.tsx)
+   - Same email confirmation fix as customer Register
+   - Shows "check your email" screen instead of silently failing
+   - vendor_profiles row is created when session is available
+
+9. PRO PROFILE PAGE (apps/pro/src/pages/ProProfile.tsx)
+   - Detects missing vendor_profiles row (PGRST116 error code)
+   - Shows "Complete your vendor profile" form if row is missing
+   - Allows vendor to pick category + travel radius and create the row
+
+10. VENDOR BIDS QUERY (packages/supabase/src/queries.ts — getVendorBids)
+    - Removed embedded users(full_name) join from jobs
+    - Was causing INNER JOIN failure (vendors can't read other users' rows via RLS)
+    - MyBids.tsx updated to show address_text instead of customer name
+
+11. VENDOR FEED QUERY (packages/supabase/src/queries.ts — getVendorFeed)
+    - Removed embedded users(full_name) join
+    - Was unnecessary and could cause silent failures
+
+
+---- ADMIN APP ----
+
+12. ADMIN JOBS QUERY (packages/supabase/src/queries.ts — adminGetAllJobs)
+    - Removed users(full_name) join — jobs table has TWO FKs to users
+      (customer_id and accepted_vendor), making the join ambiguous
+    - Jobs page didn't use customer name anyway
+
+
+================================================================================
+SUPABASE RLS POLICY CHANGE (run in SQL Editor)
+================================================================================
+
+The jobs SELECT policy originally required vendors to have their GPS location
+set in vendor_profiles (ST_DWithin check). Since location is never populated
+on signup, vendors saw zero jobs.
+
+REPLACED with category-only match (run this if not already applied):
+
+  DROP POLICY "jobs_customer_own" ON jobs;
+
+  CREATE POLICY "jobs_customer_own" ON jobs FOR SELECT USING (
+    customer_id = auth.uid() OR auth_role() = 'admin'
+    OR (
+      auth_role() = 'vendor'
+      AND status IN ('open','bidding')
+      AND EXISTS (
+        SELECT 1 FROM vendor_profiles vp
+        WHERE vp.user_id = auth.uid()
+          AND vp.category = jobs.category
+      )
+    )
+  );
+
+
+================================================================================
+ADMIN USER SETUP
+================================================================================
+
+Admin app has no registration page. To create/promote an admin user:
+
+  -- Promote existing user to admin (by email):
+  UPDATE users SET role = 'admin'
+  WHERE id = (SELECT id FROM auth.users WHERE email = 'your@email.com');
+
+  -- Or insert a new admin row after creating auth user in Supabase dashboard:
+  INSERT INTO users (id, role, full_name)
+  VALUES ('paste-uuid-here', 'admin', 'Admin');
+
+NOTE: Once a user is promoted to admin, they can no longer post jobs
+(jobs_customer_insert policy requires role = 'customer').
+Use a separate customer account for testing the customer app.
+
+
+================================================================================
+KNOWN REMAINING ISSUES / TODO
+================================================================================
+
+1. VENDOR LOCATION
+   vendor_profiles.location is never set. The new RLS policy doesn't require it,
+   but the find_nearby_vendors RPC (used on customer Home screen) still needs it
+   to show vendors on the map/nearby list. TODO: add geolocation prompt to pro
+   app onboarding or ProProfile page.
+
+2. VENDOR STATUS = 'pending'
+   New vendor accounts get status='pending'. The find_nearby_vendors RPC filters
+   by status='active'. Admin needs to approve vendors (Vendors page → change
+   status to 'active') before they appear in customer searches.
+
+3. ACCEPT BID / CHARGE FEE
+   acceptBid() calls the 'charge-fee' Edge Function. This function likely requires
+   Stripe to be configured. Test the accept flow — if it errors, the Edge Function
+   needs Stripe keys set in Supabase Edge Function secrets.
+
+4. EMAIL CONFIRMATION
+   If Supabase project has email confirmation enabled, new vendor registrations
+   won't have vendor_profiles created until they confirm + log in and go to
+   Profile page to complete setup. Consider disabling email confirmation in
+   Supabase Auth settings for easier testing.
+
+5. MESSAGES / CHAT
+   Not yet tested. Chat is only accessible after a bid is accepted.
+   messages RLS requires the user to be customer_id or accepted_vendor on the job.
+
+6. DISPUTES PAGE
+   Hardcoded badge showing "4" disputes — not dynamic. adminGetDisputes query
+   uses users!reporter_id(full_name) join (explicit FK hint, should work).
+
+7. NOTIFICATIONS
+   subscribeToNotifications uses Supabase Realtime. Not tested yet.
+
+
+================================================================================
+SUPABASE PROJECT
+================================================================================
+
+Project URL visible in dashboard: https://supabase.com/dashboard/project/afdpvuxcthzjwkeuexve
+(keep this for reference — needed for VITE_SUPABASE_URL env var)
+
+================================================================================

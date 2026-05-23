@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "mcp__Claude_Preview__preview_start",
+      "PowerShell(@\\(14360, 11568, 11484, 7320\\) | ForEach-Object { $id = $_; $cmd = \\(Get-WmiObject Win32_Process -Filter \"ProcessId=$id\" -ErrorAction SilentlyContinue\\).CommandLine; \"PID $id \\(port $\\(netstat -ano 2>$null | findstr \"LISTENING\" | Where-Object { $_ -match \"\\\\s$id$\" } | ForEach-Object { \\($_ -split '\\\\s+'\\)[2] }\\)\\): $cmd\" })",
+      "PowerShell(Stop-Process -Id 14360, 11568, 11484, 7320 -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(netstat -ano)"
+    ]
+  }
+}

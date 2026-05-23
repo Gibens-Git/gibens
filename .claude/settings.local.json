@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(netstat -ano)",
+      "Bash(findstr :5173)",
+      "Bash(curl -s http://localhost:5173/)",
+      "PowerShell(Stop-Process -Id 8936 -Force)",
+      "Bash(npm run *)",
+      "Bash(echo \"Restarted, PID: $!\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://[::1]:5173/\")",
+      "Bash(echo \"pro PID: $!\")",
+      "Bash(echo \"admin PID: $!\")",
+      "Bash(curl -s -o /dev/null -w \"pro:%{http_code} \" \"http://[::1]:5174/\")",
+      "Bash(curl -s -o /dev/null -w \"admin:%{http_code}\" \"http://[::1]:5175/\")",
+      "Bash(mkdir -p \"C:/gibens/gibens/gibens/.claude\" && echo \"done\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s \"http://[::1]:5173/src/pages/PostJob.tsx\")",
+      "Bash(curl -s \"http://[::1]:5173/\")",
+      "Bash(findstr \":5173\")",
+      "PowerShell(Stop-Process -Id 2056 -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 1; Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }; Write-Host \"cleared\")",
+      "Bash(echo \"PID: $!\")",
+      "Bash(findstr \"LISTENING\")",
+      "Bash(findstr \"5173\\\\|5174\\\\|5175\")",
+      "PowerShell(\\(Get-Command npm\\).Source)"
+    ]
+  }
+}

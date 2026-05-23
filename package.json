@@ -1,0 +1,11 @@
+{
+  "name": "gibens",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev:customer": "npm -w apps/customer run dev",
+    "dev:pro": "npm -w apps/pro run dev",
+    "dev:admin": "npm -w apps/admin run dev",
+    "build:all": "npm -w apps/customer run build && npm -w apps/pro run build && npm -w apps/admin run build"
+  }
+}

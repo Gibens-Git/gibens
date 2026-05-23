@@ -1,0 +1,13 @@
+:root {
+  --blue: #0F4C8A;
+  --blue-light: #E8F0FB;
+  --blue-mid: #2E6FBF;
+  --text: #1A1410;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f5f7fa; color: var(--text); }
+input, textarea, select, button { font-family: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
