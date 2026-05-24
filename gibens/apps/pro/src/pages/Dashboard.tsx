@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getVendorFeed, updateVendorAvailability, supabase } from '@gibens/supabase'
+import { getVendorFeed, getVendorBids, updateVendorAvailability, supabase } from '@gibens/supabase'
 import { formatRelative, getBookingFee, formatCurrency, CATEGORIES } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { Job } from '@gibens/supabase'
@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [earnings, setEarnings] = useState({ week: 0, rating: 0, newJobs: 0 })
 
   const [profileMissing, setProfileMissing] = useState(false)
+  const [bidJobIds, setBidJobIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!user) return
@@ -26,6 +27,11 @@ export default function Dashboard() {
           setProfileMissing(true)
         }
       })
+
+    // Load jobs the vendor has already bid on
+    getVendorBids(user.id).then(({ data }) => {
+      if (data) setBidJobIds(new Set(data.map(b => b.job_id)))
+    })
 
     // Load job feed (RLS filters to vendor's category)
     getVendorFeed().then(({ data, error }) => {
@@ -167,8 +173,8 @@ export default function Dashboard() {
               </div>
               <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.07)', paddingTop: 10, display: 'flex', gap: 8 }}>
                 <button onClick={() => nav(`/bid/${job.id}`)}
-                  style={{ flex: 2, background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
-                  Place a bid
+                  style={{ flex: 2, background: bidJobIds.has(job.id) ? '#2E7D4F' : '#0F4C8A', color: '#fff', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+                  {bidJobIds.has(job.id) ? 'Update bid' : 'Place a bid'}
                 </button>
                 <button onClick={() => nav(`/bid/${job.id}`)}
                   style={{ flex: 1, background: 'none', border: '0.5px solid #ccc', borderRadius: 8, padding: 9, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
