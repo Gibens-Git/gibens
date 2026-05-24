@@ -12,6 +12,7 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState('')
   const [jobTitle, setJobTitle] = useState('Chat')
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -28,7 +29,11 @@ export default function Chat() {
     })
 
     const channel = subscribeToMessages(jobId, (msg) => {
-      setMessages(prev => [...prev, msg as Message])
+      setMessages(prev => {
+        const m = msg as Message
+        if (prev.some(p => p.id === m.id)) return prev
+        return [...prev, m]
+      })
       markMessagesRead(jobId, user.id)
     })
 
@@ -42,9 +47,16 @@ export default function Chat() {
   const handleSend = async () => {
     if (!text.trim() || !jobId || !user) return
     const body = text.trim()
-    setText('')
+    setSendError('')
     setSending(true)
-    await sendMessage(jobId, user.id, body)
+    const { data: msg, error } = await sendMessage(jobId, user.id, body)
+    if (error) {
+      console.error('[Chat] send error:', error)
+      setSendError(error.message || 'Failed to send — check your connection')
+    } else {
+      setText('')
+      if (msg) setMessages(prev => [...prev, msg as Message])
+    }
     setSending(false)
   }
 
@@ -53,7 +65,8 @@ export default function Chat() {
     if (!file || !jobId || !user) return
     setSending(true)
     const url = await uploadJobPhoto(file, jobId)
-    await sendMessage(jobId, user.id, undefined, url)
+    const { data: msg } = await sendMessage(jobId, user.id, undefined, url)
+    if (msg) setMessages(prev => [...prev, msg as Message])
     setSending(false)
   }
 
@@ -106,6 +119,11 @@ export default function Chat() {
         <div ref={bottomRef} />
       </div>
 
+      {sendError && (
+        <div style={{ background: '#FEE2E2', borderTop: '0.5px solid #FECACA', padding: '8px 16px', fontSize: 12, color: '#B91C1C', flexShrink: 0 }}>
+          {sendError}
+        </div>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderTop: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', flexShrink: 0 }}>
         <label style={{ cursor: 'pointer', color: '#888', fontSize: 22 }}>
           <i className="ti ti-photo" />

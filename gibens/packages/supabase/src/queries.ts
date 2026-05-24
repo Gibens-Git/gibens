@@ -108,7 +108,7 @@ export const getJobDetail = (jobId: string) =>
 export const getJobBidsDetail = (jobId: string) =>
   supabase
     .from('bids')
-    .select('*, users(full_name, avatar_url), vendor_profiles(avg_rating, is_licensed, is_insured, is_id_verified, total_reviews)')
+    .select('*, users!vendor_id(full_name, avatar_url, vendor_profiles(avg_rating, is_licensed, is_insured, is_id_verified, total_reviews))')
     .eq('job_id', jobId)
     .order('created_at', { ascending: true })
 
@@ -132,7 +132,7 @@ export const createBid = (bid: {
 export const getJobBids = (jobId: string) =>
   supabase
     .from('bids')
-    .select('*, users(full_name, avatar_url), vendor_profiles(avg_rating, total_reviews, category, is_licensed, is_insured)')
+    .select('*, users!vendor_id(full_name, avatar_url, vendor_profiles(avg_rating, total_reviews, category, is_licensed, is_insured))')
     .eq('job_id', jobId)
     .order('created_at', { ascending: true })
 
@@ -142,6 +142,24 @@ export const getVendorBids = (vendorId: string) =>
     .select('*, jobs(title, address_text, status, customer_id)')
     .eq('vendor_id', vendorId)
     .order('created_at', { ascending: false })
+
+export const getVendorBidForJob = (jobId: string, vendorId: string) =>
+  supabase
+    .from('bids')
+    .select('*')
+    .eq('job_id', jobId)
+    .eq('vendor_id', vendorId)
+    .maybeSingle()
+
+export const updateBid = (bidId: string, updates: {
+  amount: number
+  booking_fee: number
+  message: string
+  pricing_type: string
+  availability?: string
+  est_duration?: string
+}) =>
+  supabase.from('bids').update(updates).eq('id', bidId).select().single()
 
 export const acceptBid = async (bidId: string) => {
   const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/charge-fee`, {

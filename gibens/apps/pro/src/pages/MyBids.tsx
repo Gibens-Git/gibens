@@ -48,10 +48,10 @@ export default function MyBids() {
                 </div>
               </div>
               <p style={{ fontSize: 12, color: '#888' }}>Booking fee: ${bid.booking_fee}</p>
-              {bid.status === 'accepted' && (
+              {(bid.status === 'pending' || bid.status === 'accepted') && (
                 <button onClick={() => nav(`/chat/${bid.job_id}`)}
-                  style={{ marginTop: 10, width: '100%', background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 8, padding: 9, fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                  <i className="ti ti-message" /> Message customer
+                  style={{ marginTop: 10, width: '100%', background: bid.status === 'accepted' ? '#0F4C8A' : 'none', color: bid.status === 'accepted' ? '#fff' : '#0F4C8A', border: bid.status === 'accepted' ? 'none' : '0.5px solid #0F4C8A', borderRadius: 8, padding: 9, fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <i className="ti ti-message" /> {bid.status === 'accepted' ? 'Message customer' : 'Chat with customer'}
                 </button>
               )}
             </div>

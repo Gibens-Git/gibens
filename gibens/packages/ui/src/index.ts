@@ -71,7 +71,7 @@ export const AVATAR_COLORS = [
 ]
 
 export const getAvatarColor = (name: string) =>
-  AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]
+  AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length]
 
 export const urgencyLabels: Record<string, string> = {
   asap: 'As soon as possible',

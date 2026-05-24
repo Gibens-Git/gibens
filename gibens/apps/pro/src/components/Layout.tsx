@@ -1,11 +1,12 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications } from '../hooks/useNotifications'
 
 export default function Layout() {
   const { user } = useAuth()
-  const { unreadCount } = useNotifications(user?.id)
+  const { unreadCount, toast, dismissToast } = useNotifications(user?.id)
   const loc = useLocation()
+  const nav = useNavigate()
 
   const tabs = [
     { to: '/',         icon: 'layout-dashboard', label: 'Dashboard' },
@@ -17,6 +18,24 @@ export default function Layout() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#fff' }}>
+      {toast && (
+        <div style={{ position: 'fixed', top: 12, left: 12, right: 12, zIndex: 200, background: '#1a1a1a', color: '#fff', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.25)' }}>
+          <i className="ti ti-message-circle" style={{ fontSize: 18, marginTop: 1, flexShrink: 0, color: '#EF9F27' }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600 }}>{toast.title}</p>
+            <p style={{ fontSize: 12, color: '#ccc', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{toast.body}</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            {(toast.data as Record<string, string>)?.job_id && (
+              <button onClick={() => { nav(`/chat/${(toast.data as Record<string, string>).job_id}`); dismissToast() }}
+                style={{ background: '#EF9F27', color: '#412402', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                View
+              </button>
+            )}
+            <button onClick={dismissToast} style={{ background: 'none', border: 'none', color: '#888', fontSize: 18, cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+          </div>
+        </div>
+      )}
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 64 }}>
         <Outlet />
       </div>

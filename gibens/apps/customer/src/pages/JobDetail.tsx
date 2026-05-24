@@ -112,13 +112,13 @@ export default function JobDetail() {
                   <div>
                     <p style={{ fontWeight: 500, fontSize: 14 }}>{bid.users?.full_name}</p>
                     <div style={{ display: 'flex', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
-                      {bid.vendor_profiles?.avg_rating && (
+                      {bid.users?.vendor_profiles?.avg_rating && (
                         <span style={{ fontSize: 12, color: '#888' }}>
-                          <i className="ti ti-star-filled" style={{ color: '#E8A020', fontSize: 12 }} /> {bid.vendor_profiles.avg_rating} ({bid.vendor_profiles.total_reviews} reviews)
+                          <i className="ti ti-star-filled" style={{ color: '#E8A020', fontSize: 12 }} /> {bid.users.vendor_profiles.avg_rating} ({bid.users.vendor_profiles.total_reviews} reviews)
                         </span>
                       )}
-                      {bid.vendor_profiles?.is_licensed && <span style={{ fontSize: 11, background: '#EAF3DE', color: '#3B6D11', padding: '1px 6px', borderRadius: 20 }}>Licensed</span>}
-                      {bid.vendor_profiles?.is_insured && <span style={{ fontSize: 11, background: '#EAF3DE', color: '#3B6D11', padding: '1px 6px', borderRadius: 20 }}>Insured</span>}
+                      {bid.users?.vendor_profiles?.is_licensed && <span style={{ fontSize: 11, background: '#EAF3DE', color: '#3B6D11', padding: '1px 6px', borderRadius: 20 }}>Licensed</span>}
+                      {bid.users?.vendor_profiles?.is_insured && <span style={{ fontSize: 11, background: '#EAF3DE', color: '#3B6D11', padding: '1px 6px', borderRadius: 20 }}>Insured</span>}
                     </div>
                   </div>
                 </div>

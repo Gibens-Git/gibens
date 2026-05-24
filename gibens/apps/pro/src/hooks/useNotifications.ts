@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase, subscribeToNotifications } from '@gibens/supabase'
 import type { Notification } from '@gibens/supabase'
 
 export function useNotifications(userId: string | undefined) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [toast, setToast] = useState<Notification | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!userId) return
@@ -23,11 +25,18 @@ export function useNotifications(userId: string | undefined) {
       })
 
     const channel = subscribeToNotifications(userId, (n) => {
-      setNotifications(prev => [n as Notification, ...prev])
+      const notif = n as Notification
+      setNotifications(prev => [notif, ...prev])
       setUnreadCount(c => c + 1)
+      setToast(notif)
+      if (toastTimer.current) clearTimeout(toastTimer.current)
+      toastTimer.current = setTimeout(() => setToast(null), 5000)
     })
 
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      supabase.removeChannel(channel)
+      if (toastTimer.current) clearTimeout(toastTimer.current)
+    }
   }, [userId])
 
   const markRead = async (id: string) => {
@@ -36,5 +45,10 @@ export function useNotifications(userId: string | undefined) {
     setUnreadCount(c => Math.max(0, c - 1))
   }
 
-  return { notifications, unreadCount, markRead }
+  const dismissToast = () => {
+    setToast(null)
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+  }
+
+  return { notifications, unreadCount, markRead, toast, dismissToast }
 }

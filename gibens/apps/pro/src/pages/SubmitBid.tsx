@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getJobDetail, createBid, getBookingFeePreview } from '@gibens/supabase'
+import { getJobDetail, createBid, updateBid, getVendorBidForJob } from '@gibens/supabase'
 import { pricingLabels, urgencyLabels, getBookingFee, formatCurrency } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { Job } from '@gibens/supabase'
@@ -10,6 +10,7 @@ export default function SubmitBid() {
   const nav = useNavigate()
   const { user } = useAuth()
   const [job, setJob] = useState<Job | null>(null)
+  const [existingBidId, setExistingBidId] = useState<string | null>(null)
   const [form, setForm] = useState({ amount: '', message: '', pricing_type: 'fixed_incl', availability: 'Today (same day)', est_duration: 'Under 1 hour' })
   const [fee, setFee] = useState(5)
   const [loading, setLoading] = useState(false)
@@ -20,7 +21,25 @@ export default function SubmitBid() {
     getJobDetail(jobId).then(({ data }) => setJob(data))
   }, [jobId])
 
-  const updateFee = async (amount: string) => {
+  useEffect(() => {
+    if (!jobId || !user) return
+    getVendorBidForJob(jobId, user.id).then(({ data }) => {
+      if (data) {
+        setExistingBidId(data.id)
+        setForm({
+          amount: String(data.amount),
+          message: data.message ?? '',
+          pricing_type: data.pricing_type ?? 'fixed_incl',
+          availability: data.availability ?? 'Today (same day)',
+          est_duration: data.est_duration ?? 'Under 1 hour',
+        })
+        const { fee: f } = getBookingFee(data.amount)
+        setFee(f)
+      }
+    })
+  }, [jobId, user])
+
+  const updateFee = (amount: string) => {
     const n = parseFloat(amount)
     if (!isNaN(n) && n > 0) {
       const { fee: f } = getBookingFee(n)
@@ -34,18 +53,32 @@ export default function SubmitBid() {
     const amount = parseFloat(form.amount)
     if (isNaN(amount) || amount <= 0) { setError('Enter a valid bid amount'); return }
     setLoading(true); setError('')
-    const { data, error: err } = await createBid({
-      job_id: jobId,
-      vendor_id: user.id,
-      amount,
-      booking_fee: fee,
-      message: form.message,
-      pricing_type: form.pricing_type as 'fixed_incl' | 'fixed_excl' | 'hourly' | 'estimate',
-      availability: form.availability,
-      est_duration: form.est_duration,
-    })
-    if (err) { setError(err.message); setLoading(false) }
-    else nav('/bids')
+
+    if (existingBidId) {
+      const { error: err } = await updateBid(existingBidId, {
+        amount,
+        booking_fee: fee,
+        message: form.message,
+        pricing_type: form.pricing_type,
+        availability: form.availability,
+        est_duration: form.est_duration,
+      })
+      if (err) { setError(err.message); setLoading(false) }
+      else nav('/bids')
+    } else {
+      const { error: err } = await createBid({
+        job_id: jobId,
+        vendor_id: user.id,
+        amount,
+        booking_fee: fee,
+        message: form.message,
+        pricing_type: form.pricing_type as 'fixed_incl' | 'fixed_excl' | 'hourly' | 'estimate',
+        availability: form.availability,
+        est_duration: form.est_duration,
+      })
+      if (err) { setError(err.message); setLoading(false) }
+      else nav('/bids')
+    }
   }
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -59,8 +92,15 @@ export default function SubmitBid() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fff' }}>
         <button onClick={() => nav(-1)} style={{ background: 'none', border: 'none', fontSize: 20, color: '#888' }}><i className="ti ti-arrow-left" /></button>
-        <span style={{ fontSize: 16, fontWeight: 500 }}>Submit a bid</span>
+        <span style={{ fontSize: 16, fontWeight: 500 }}>{existingBidId ? 'Update your bid' : 'Submit a bid'}</span>
       </div>
+
+      {existingBidId && (
+        <div style={{ background: '#E8F3EC', borderBottom: '0.5px solid #A8D5B5', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <i className="ti ti-pencil" style={{ color: '#2E7D4F', fontSize: 15 }} />
+          <p style={{ fontSize: 13, color: '#1E5C38' }}>You already have a bid on this job — editing it now.</p>
+        </div>
+      )}
 
       {job && (
         <div style={{ background: '#E8F0FB', padding: '12px 20px', borderBottom: '0.5px solid #B5D4F4' }}>
@@ -165,7 +205,12 @@ export default function SubmitBid() {
         <button type="submit" disabled={loading}
           style={{ background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <i className="ti ti-send" />
-          {loading ? 'Submitting...' : `Submit bid${amount > 0 ? ` — ${formatCurrency(amount)} to customer` : ''}`}
+          {loading
+            ? (existingBidId ? 'Updating...' : 'Submitting...')
+            : existingBidId
+              ? `Update bid${amount > 0 ? ` — ${formatCurrency(amount)} to customer` : ''}`
+              : `Submit bid${amount > 0 ? ` — ${formatCurrency(amount)} to customer` : ''}`
+          }
         </button>
         <p style={{ fontSize: 12, color: '#aaa', textAlign: 'center' }}>
           The booking fee is only charged when the customer accepts your bid.

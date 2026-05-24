@@ -19,6 +19,8 @@ export interface User {
   is_active: boolean
   created_at: string
   updated_at: string
+  // Joined
+  vendor_profiles?: VendorProfile
 }
 
 export interface VendorProfile {

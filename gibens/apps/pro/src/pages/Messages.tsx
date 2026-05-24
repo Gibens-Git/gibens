@@ -20,30 +20,35 @@ export default function Messages() {
 
   useEffect(() => {
     if (!user) return
-    // Get jobs the user is part of that have messages
+    // Query via bids — vendor sees jobs they've bid on that have messages
     supabase
-      .from('jobs')
-      .select('id, title, accepted_vendor, messages(body, photo_url, created_at, is_read, sender_id, users(full_name))')
-      .eq('customer_id', user.id)
-      .not('messages', 'is', null)
-      .order('created_at', { foreignTable: 'messages', ascending: false })
+      .from('bids')
+      .select('job_id, jobs(id, title, messages(body, photo_url, created_at, is_read, sender_id, users(full_name)))')
+      .eq('vendor_id', user.id)
       .then(({ data }) => {
         if (!data) return
-        const t = data
-          .filter((j: Record<string, unknown>) => (j.messages as unknown[]).length > 0)
-          .map((j: Record<string, unknown>) => {
-            const msgs = j.messages as Record<string, unknown>[]
-            const last = msgs[0]
-            const unread = msgs.filter((m: Record<string, unknown>) => !m.is_read && m.sender_id !== user.id).length
-            return {
-              job_id: j.id as string,
-              job_title: j.title as string,
-              other_name: (last.users as Record<string, unknown>)?.full_name as string || 'Pro',
-              last_message: (last.body as string) || 'Sent a photo',
-              last_at: last.created_at as string,
-              unread,
-            }
+        const t: Thread[] = []
+        for (const bid of data as Record<string, unknown>[]) {
+          const job = bid.jobs as Record<string, unknown> | null
+          if (!job) continue
+          const msgs = (job.messages as Record<string, unknown>[]) || []
+          if (msgs.length === 0) continue
+          const sorted = [...msgs].sort((a, b) =>
+            new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()
+          )
+          const last = sorted[0]
+          const unread = sorted.filter(m => !m.is_read && m.sender_id !== user.id).length
+          t.push({
+            job_id: job.id as string,
+            job_title: job.title as string,
+            other_name: (last.users as Record<string, unknown>)?.full_name as string || 'Customer',
+            last_message: (last.body as string) || 'Sent a photo',
+            last_at: last.created_at as string,
+            unread,
           })
+        }
+        // Sort threads newest first
+        t.sort((a, b) => new Date(b.last_at).getTime() - new Date(a.last_at).getTime())
         setThreads(t)
       })
   }, [user])
@@ -52,14 +57,14 @@ export default function Messages() {
     <div>
       <div style={{ padding: '14px 20px 10px', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fff' }}>
         <h1 style={{ fontSize: 20, fontWeight: 500 }}>Messages</h1>
-        <p style={{ fontSize: 13, color: '#888', marginTop: 2 }}>Chat with your service pros</p>
+        <p style={{ fontSize: 13, color: '#888', marginTop: 2 }}>Chat with your customers</p>
       </div>
 
       {threads.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: '#888' }}>
           <i className="ti ti-message-circle" style={{ fontSize: 48, display: 'block', marginBottom: 12 }} />
           <p style={{ fontWeight: 500 }}>No messages yet</p>
-          <p style={{ fontSize: 13, marginTop: 4 }}>Post a job and chat with vendors after they bid</p>
+          <p style={{ fontSize: 13, marginTop: 4 }}>Messages from customers will appear here</p>
         </div>
       )}
 
