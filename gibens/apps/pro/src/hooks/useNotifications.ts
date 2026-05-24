@@ -46,23 +46,33 @@ export function useNotifications(userId: string | undefined) {
       showToast(notif)
     })
 
-    // Polling fallback — catches notifications when realtime is not configured
+    // Polling fallback — catches new notifications and refreshes unread count
     pollRef.current = setInterval(async () => {
       if (!lastNotifAt.current) return
-      const { data } = await supabase
+
+      // Check for genuinely new notifications (show toast)
+      const { data: newData } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', userId)
         .gt('created_at', lastNotifAt.current)
         .order('created_at', { ascending: true })
 
-      if (data?.length) {
-        lastNotifAt.current = data[data.length - 1].created_at
-        const incoming = data as Notification[]
+      if (newData?.length) {
+        lastNotifAt.current = newData[newData.length - 1].created_at
+        const incoming = newData as Notification[]
         setNotifications(prev => [...incoming.slice().reverse(), ...prev])
-        setUnreadCount(c => c + incoming.length)
         showToast(incoming[incoming.length - 1])
       }
+
+      // Always re-count unread so badge clears when chat is opened elsewhere
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('is_read', false)
+
+      if (count !== null) setUnreadCount(count)
     }, 8000)
 
     return () => {

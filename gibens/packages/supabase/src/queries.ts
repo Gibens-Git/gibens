@@ -219,6 +219,13 @@ export const getNotifications = (userId: string) =>
 export const markNotificationRead = (id: string) =>
   supabase.from('notifications').update({ is_read: true }).eq('id', id)
 
+export const markJobNotificationsRead = (jobId: string) =>
+  supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('is_read', false)
+    .filter('data->>job_id', 'eq', jobId)
+
 export const subscribeToNotifications = (userId: string, callback: (n: unknown) => void) =>
   supabase
     .channel(`notifications:${userId}`)
