@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getJobDetail, getJobBidsDetail, acceptBid } from '@gibens/supabase'
+import { getJobDetail, getJobBidsDetail, acceptBid, deleteJob } from '@gibens/supabase'
 import { getAvatarColor, getInitials, formatCurrency, formatRelative, pricingLabels, statusLabels } from '@gibens/ui'
 import type { Job, Bid } from '@gibens/supabase'
 
@@ -11,6 +11,7 @@ export default function JobDetail() {
   const [bids, setBids] = useState<Bid[]>([])
   const [loading, setLoading] = useState(true)
   const [accepting, setAccepting] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!jobId) return
@@ -25,6 +26,14 @@ export default function JobDetail() {
       setLoading(false)
     })
   }, [jobId])
+
+  const handleDelete = async () => {
+    if (!jobId || !confirm('Delete this job? This cannot be undone.')) return
+    setDeleting(true)
+    const { error } = await deleteJob(jobId)
+    if (error) { alert('Could not delete: ' + error.message); setDeleting(false) }
+    else nav('/jobs', { replace: true })
+  }
 
   const handleAccept = async (bid: Bid) => {
     if (!confirm(`Accept bid of ${formatCurrency(bid.amount)} from this vendor?`)) return
@@ -58,6 +67,12 @@ export default function JobDetail() {
         <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: '#EEEDFE', color: '#3C3489', fontWeight: 500 }}>
           {status.label}
         </span>
+        {(job.status === 'open' || job.status === 'bidding') && (
+          <button onClick={handleDelete} disabled={deleting}
+            style={{ background: 'none', border: 'none', color: '#ccc', fontSize: 20, cursor: 'pointer', padding: 0 }}>
+            <i className="ti ti-trash" />
+          </button>
+        )}
       </div>
 
       <div style={{ padding: '16px 20px' }}>

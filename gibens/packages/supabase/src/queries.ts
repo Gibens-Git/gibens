@@ -115,6 +115,9 @@ export const getJobBidsDetail = (jobId: string) =>
 export const updateJobStatus = (jobId: string, status: string) =>
   supabase.from('jobs').update({ status }).eq('id', jobId)
 
+export const deleteJob = (jobId: string) =>
+  supabase.from('jobs').delete().eq('id', jobId)
+
 // ---- BIDS ----
 
 export const createBid = (bid: {

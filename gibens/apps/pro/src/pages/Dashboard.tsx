@@ -57,9 +57,12 @@ export default function Dashboard() {
   }
 
   const [filter, setFilter] = useState('all')
+  const [passedIds, setPassedIds] = useState<Set<string>>(new Set())
   const filters = ['all', 'urgent', 'no bids', 'highest pay', 'closest']
 
-  const filteredJobs = jobs.filter(j => {
+  const pass = (id: string) => setPassedIds(prev => new Set([...prev, id]))
+
+  const filteredJobs = jobs.filter(j => !passedIds.has(j.id)).filter(j => {
     if (filter === 'urgent') return j.urgency === 'asap' || j.urgency === 'today'
     if (filter === 'no bids') return j.bid_count === 0
     return true
@@ -171,7 +174,7 @@ export default function Dashboard() {
                   style={{ flex: 1, background: 'none', border: '0.5px solid #ccc', borderRadius: 8, padding: 9, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                   <i className="ti ti-eye" /> Details
                 </button>
-                <button style={{ background: 'none', border: '0.5px solid #ccc', borderRadius: 8, padding: '9px 12px', fontSize: 13, cursor: 'pointer', color: '#888' }}>Pass</button>
+                <button onClick={() => pass(job.id)} style={{ background: 'none', border: '0.5px solid #ccc', borderRadius: 8, padding: '9px 12px', fontSize: 13, cursor: 'pointer', color: '#888' }}>Pass</button>
               </div>
               <p style={{ fontSize: 11, color: '#888', marginTop: 8 }}>
                 <i className="ti ti-receipt" /> Lead fee: <strong>${fee}</strong> charged when customer accepts
