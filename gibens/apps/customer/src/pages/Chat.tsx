@@ -15,6 +15,8 @@ export default function Chat() {
   const [sendError, setSendError] = useState('')
   const [jobTitle, setJobTitle] = useState('Chat')
   const bottomRef = useRef<HTMLDivElement>(null)
+  const lastMsgAt = useRef<string>('')
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (!jobId || !user) return
@@ -24,20 +26,51 @@ export default function Chat() {
     })
 
     getMessages(jobId).then(({ data }) => {
-      if (data) setMessages(data as Message[])
-      markMessagesRead(jobId, user.id)
+      if (data) {
+        setMessages(data as Message[])
+        lastMsgAt.current = data.length > 0 ? data[data.length - 1].created_at : new Date().toISOString()
+        markMessagesRead(jobId, user.id)
+      } else {
+        lastMsgAt.current = new Date().toISOString()
+      }
+
+      // Start polling after initial load so we only fetch genuinely new messages
+      pollRef.current = setInterval(async () => {
+        const { data: newMsgs } = await supabase
+          .from('messages')
+          .select('*, users(full_name, avatar_url)')
+          .eq('job_id', jobId)
+          .gt('created_at', lastMsgAt.current)
+          .order('created_at', { ascending: true })
+
+        if (newMsgs?.length) {
+          setMessages(prev => {
+            const existingIds = new Set(prev.map(m => m.id))
+            const fresh = (newMsgs as Message[]).filter(m => !existingIds.has(m.id))
+            if (!fresh.length) return prev
+            lastMsgAt.current = fresh[fresh.length - 1].created_at
+            return [...prev, ...fresh]
+          })
+          markMessagesRead(jobId, user.id)
+        }
+      }, 4000)
     })
 
+    // Realtime subscription — works when messages table is in supabase_realtime publication
     const channel = subscribeToMessages(jobId, (msg) => {
       setMessages(prev => {
         const m = msg as Message
         if (prev.some(p => p.id === m.id)) return prev
+        lastMsgAt.current = m.created_at
         return [...prev, m]
       })
       markMessagesRead(jobId, user.id)
     })
 
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      supabase.removeChannel(channel)
+      if (pollRef.current) clearInterval(pollRef.current)
+    }
   }, [jobId, user])
 
   useEffect(() => {
@@ -55,7 +88,10 @@ export default function Chat() {
       setSendError(error.message || 'Failed to send — check your connection')
     } else {
       setText('')
-      if (msg) setMessages(prev => [...prev, msg as Message])
+      if (msg) {
+        setMessages(prev => [...prev, msg as Message])
+        lastMsgAt.current = (msg as Message).created_at
+      }
     }
     setSending(false)
   }
@@ -66,7 +102,10 @@ export default function Chat() {
     setSending(true)
     const url = await uploadJobPhoto(file, jobId)
     const { data: msg } = await sendMessage(jobId, user.id, undefined, url)
-    if (msg) setMessages(prev => [...prev, msg as Message])
+    if (msg) {
+      setMessages(prev => [...prev, msg as Message])
+      lastMsgAt.current = (msg as Message).created_at
+    }
     setSending(false)
   }
 
