@@ -67,6 +67,7 @@ export default function Chat() {
         return [...prev, m]
       })
       markMessagesRead(jobId, user.id)
+      markJobNotificationsRead(jobId, user.id)
     })
 
     return () => {
