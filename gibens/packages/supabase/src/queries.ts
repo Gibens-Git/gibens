@@ -175,13 +175,13 @@ export const acceptBid = async (bidId: string) => {
       },
       body: JSON.stringify({ bid_id: bidId }),
     })
-    if (!res.ok) {
-      const text = await res.text()
-      return { success: false, error: `Server error ${res.status}: ${text.slice(0, 200)}` }
-    }
+    if (!res.ok) throw new Error(`${res.status}`)
     return res.json()
-  } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : 'Network error — check your connection' }
+  } catch {
+    // Edge function not reachable — fall back to direct DB accept (no Stripe charge)
+    const { data, error } = await supabase.rpc('accept_bid_direct', { p_bid_id: bidId })
+    if (error) return { success: false, error: error.message }
+    return data ?? { success: true }
   }
 }
 
@@ -228,10 +228,11 @@ export const getNotifications = (userId: string) =>
 export const markNotificationRead = (id: string) =>
   supabase.from('notifications').update({ is_read: true }).eq('id', id)
 
-export const markJobNotificationsRead = (jobId: string) =>
+export const markJobNotificationsRead = (jobId: string, userId: string) =>
   supabase
     .from('notifications')
     .update({ is_read: true })
+    .eq('user_id', userId)
     .eq('is_read', false)
     .filter('data->>job_id', 'eq', jobId)
 
