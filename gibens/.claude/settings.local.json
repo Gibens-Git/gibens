@@ -7,7 +7,8 @@
       "PowerShell(Stop-Process -Id 14360, 11568, 11484, 7320 -Force -ErrorAction SilentlyContinue)",
       "PowerShell(netstat -ano)",
       "Bash(grep -n \"mark_messages_read\\\\|markMessagesRead\\\\|is_read\\\\|unread\" \"C:\\\\gibens\\\\gibens\\\\supabase\\\\migrations\\\\001_initial_schema.sql\" 2>&1)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(dir C:\\\\gibens\\\\gibens\\\\supabase\\\\migrations)"
     ]
   }
 }
