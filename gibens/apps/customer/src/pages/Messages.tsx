@@ -20,32 +20,17 @@ export default function Messages() {
 
   useEffect(() => {
     if (!user) return
-    // Get jobs the user is part of that have messages
-    supabase
-      .from('jobs')
-      .select('id, title, accepted_vendor, messages(body, photo_url, created_at, is_read, sender_id, users(full_name))')
-      .eq('customer_id', user.id)
-      .not('messages', 'is', null)
-      .order('created_at', { foreignTable: 'messages', ascending: false })
-      .then(({ data }) => {
-        if (!data) return
-        const t = data
-          .filter((j: Record<string, unknown>) => (j.messages as unknown[]).length > 0)
-          .map((j: Record<string, unknown>) => {
-            const msgs = j.messages as Record<string, unknown>[]
-            const last = msgs[0]
-            const unread = msgs.filter((m: Record<string, unknown>) => !m.is_read && m.sender_id !== user.id).length
-            return {
-              job_id: j.id as string,
-              job_title: j.title as string,
-              other_name: (last.users as Record<string, unknown>)?.full_name as string || 'Pro',
-              last_message: (last.body as string) || 'Sent a photo',
-              last_at: last.created_at as string,
-              unread,
-            }
-          })
-        setThreads(t)
-      })
+    supabase.rpc('get_customer_chat_list', { p_customer_id: user.id }).then(({ data }) => {
+      if (!data) return
+      setThreads(data.map((r: Record<string, unknown>) => ({
+        job_id:       r.job_id as string,
+        job_title:    r.job_title as string,
+        other_name:   (r.other_name as string) || 'Pro',
+        last_message: (r.last_body as string) || 'Sent a photo',
+        last_at:      r.last_at as string,
+        unread:       Number(r.unread_count),
+      })))
+    })
   }, [user])
 
   return (

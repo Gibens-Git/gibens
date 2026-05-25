@@ -20,37 +20,17 @@ export default function Messages() {
 
   useEffect(() => {
     if (!user) return
-    // Query via bids — vendor sees jobs they've bid on that have messages
-    supabase
-      .from('bids')
-      .select('job_id, jobs(id, title, messages(body, photo_url, created_at, is_read, sender_id, users(full_name)))')
-      .eq('vendor_id', user.id)
-      .then(({ data }) => {
-        if (!data) return
-        const t: Thread[] = []
-        for (const bid of data as Record<string, unknown>[]) {
-          const job = bid.jobs as Record<string, unknown> | null
-          if (!job) continue
-          const msgs = (job.messages as Record<string, unknown>[]) || []
-          if (msgs.length === 0) continue
-          const sorted = [...msgs].sort((a, b) =>
-            new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()
-          )
-          const last = sorted[0]
-          const unread = sorted.filter(m => !m.is_read && m.sender_id !== user.id).length
-          t.push({
-            job_id: job.id as string,
-            job_title: job.title as string,
-            other_name: (last.users as Record<string, unknown>)?.full_name as string || 'Customer',
-            last_message: (last.body as string) || 'Sent a photo',
-            last_at: last.created_at as string,
-            unread,
-          })
-        }
-        // Sort threads newest first
-        t.sort((a, b) => new Date(b.last_at).getTime() - new Date(a.last_at).getTime())
-        setThreads(t)
-      })
+    supabase.rpc('get_vendor_chat_list', { p_vendor_id: user.id }).then(({ data }) => {
+      if (!data) return
+      setThreads(data.map((r: Record<string, unknown>) => ({
+        job_id:       r.job_id as string,
+        job_title:    r.job_title as string,
+        other_name:   (r.other_name as string) || 'Customer',
+        last_message: (r.last_body as string) || 'Sent a photo',
+        last_at:      r.last_at as string,
+        unread:       Number(r.unread_count),
+      })))
+    })
   }, [user])
 
   return (
