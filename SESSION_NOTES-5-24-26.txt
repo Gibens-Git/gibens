@@ -1,0 +1,155 @@
+SESSION NOTES — 2026-05-24
+Gibens Platform — Customer / Pro / Admin apps
+Repo: C:\gibens\gibens
+Branch: master
+
+=======================================================
+WHAT WAS DONE THIS SESSION
+=======================================================
+
+1. FIXED: PRO RLS ERROR WHEN SENDING MESSAGES
+   Root cause: messages_insert policy did EXISTS(SELECT FROM jobs) which
+   went through jobs_select RLS. jobs_select only showed vendors jobs in
+   'open'/'bidding' status. After bid acceptance job becomes 'accepted',
+   making it invisible in the subquery → INSERT denied.
+   Migrations applied:
+     009_fix_jobs_select_and_messages.sql — rebuilt jobs_select so vendors
+       can see any job they have a bid on regardless of status; added
+       SECURITY DEFINER to mark_messages_read (no UPDATE policy on messages)
+     010_fix_messages_rls_direct.sql — rewrote messages_read/insert to use
+       direct bids check instead of jobs subquery
+     011_messages_security_definer.sql — final/definitive fix: added
+       user_can_message_job() SECURITY DEFINER helper, rebuilt
+       messages_read and messages_insert to use it, added
+       get_vendor_chat_list() and get_customer_chat_list() SECURITY
+       DEFINER RPCs for the Messages list pages
+   Files changed:
+     supabase/migrations/009_fix_jobs_select_and_messages.sql (new)
+     supabase/migrations/010_fix_messages_rls_direct.sql (new)
+     supabase/migrations/011_messages_security_definer.sql (new)
+     gibens/apps/pro/src/pages/Messages.tsx — now uses get_vendor_chat_list RPC
+     gibens/apps/customer/src/pages/Messages.tsx — now uses get_customer_chat_list RPC
+
+2. FIXED: MESSAGES LIST PAGE SHOWING "NO MESSAGES YET"
+   Root cause: pro Messages page used a nested bids->jobs->messages query.
+   Each join went through a different RLS policy; the chain silently
+   filtered out messages for accepted jobs.
+   Fix: replaced with SECURITY DEFINER RPCs (see migration 011 above).
+   Messages list now works correctly.
+
+3. FIXED (PARTIAL): UNREAD BADGE NOT CLEARING
+   Root cause #1 (fixed): badge counted ALL unread notifications (bid
+     accepted, job confirmed, etc.), not just new_message type.
+     Fix: useNotifications now filters by type='new_message' everywhere.
+   Root cause #2 (fixed): markJobNotificationsRead was not called in the
+     realtime subscription callback — only on initial load and polling.
+     If a message arrived via realtime, its notification stayed unread.
+     Fix: added markJobNotificationsRead call to realtime callback in
+     both Chat.tsx files.
+   Files changed:
+     gibens/apps/pro/src/hooks/useNotifications.ts
+     gibens/apps/customer/src/hooks/useNotifications.ts
+     gibens/apps/pro/src/pages/Chat.tsx
+     gibens/apps/customer/src/pages/Chat.tsx
+
+=======================================================
+STILL UNRESOLVED — PICK UP HERE TOMORROW
+=======================================================
+
+BADGE STILL SHOWING "1 UNREAD" after all fixes above.
+  - The messages list now correctly shows threads (migration 011 fixed that)
+  - Sending messages now works (migration 009/010/011 fixed that)
+  - But the Messages tab badge still shows "1" even after reading the chat
+
+  Remaining theories to investigate:
+  A) markJobNotificationsRead filter may not be working correctly.
+     The filter is: .filter('data->>job_id', 'eq', jobId)
+     The notification data column is JSONB: {"job_id": "<uuid>", "job_title": "..."}
+     Try verifying in Supabase SQL Editor:
+       SELECT * FROM notifications WHERE user_id = '<vendor_id>' AND is_read = false;
+     If rows exist after opening chat, the UPDATE is failing silently.
+
+  B) There may be a new notification being created every time the
+     notification poll interval fires and finds a new message (if Realtime
+     and polling both trigger the notification trigger).
+     The trigger fires on every message INSERT — this is correct, it only
+     runs once per message. But check if duplicate messages are being
+     inserted somehow.
+
+  C) The useNotifications 8-second poll re-counts unread and should drop
+     to 0 after markJobNotificationsRead runs. But if the UPDATE to
+     notifications is failing due to RLS, the count stays 1.
+     Check: notifications_update_own policy uses USING (user_id = auth.uid())
+     — this should be fine, but worth verifying.
+
+  D) Simplest debug: open browser console on the pro app while in chat,
+     check for any errors from the markJobNotificationsRead call.
+
+  SUGGESTED FIX TO TRY NEXT:
+  Change markJobNotificationsRead in queries.ts to also filter by
+  type='new_message' and remove the is_read=false filter (mark all
+  new_message notifications for the job as read regardless):
+
+    export const markJobNotificationsRead = (jobId: string, userId: string) =>
+      supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', userId)
+        .eq('type', 'new_message')
+        .filter('data->>job_id', 'eq', jobId)
+
+  If that still doesn't work, try completely bypassing the JSONB filter
+  and mark ALL new_message notifications for the user as read (simpler,
+  less precise but guaranteed to clear the badge):
+
+    export const markAllMessageNotifsRead = (userId: string) =>
+      supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', userId)
+        .eq('type', 'new_message')
+        .eq('is_read', false)
+
+  Then call markAllMessageNotifsRead(user.id) instead of
+  markJobNotificationsRead in Chat.tsx on load and in the realtime callback.
+
+=======================================================
+MIGRATIONS STATUS (all must be run manually in Supabase SQL Editor)
+=======================================================
+
+  001 — initial schema (run earlier)
+  002 — fix RLS (run earlier)
+  003 — fix trigger (run earlier)
+  004 — message notifications (run earlier)
+  005 — job delete policy (run earlier)
+  006 — fix jobs insert policy (run earlier)
+  007 — ensure message notification trigger (run earlier)
+  008 — accept_bid_rpc — user confirmed run
+  009 — fix_jobs_select_and_messages — user confirmed run (SUCCESS)
+  010 — fix_messages_rls_direct — user confirmed run (SUCCESS)
+  011 — messages_security_definer — user confirmed run (SUCCESS)
+
+=======================================================
+KEY FILES
+=======================================================
+
+  packages/supabase/src/queries.ts — all Supabase query helpers
+  apps/pro/src/pages/Chat.tsx — pro chat page
+  apps/customer/src/pages/Chat.tsx — customer chat page
+  apps/pro/src/pages/Messages.tsx — pro thread list (uses get_vendor_chat_list RPC)
+  apps/customer/src/pages/Messages.tsx — customer thread list (uses get_customer_chat_list RPC)
+  apps/pro/src/hooks/useNotifications.ts — badge count (filters by type='new_message')
+  apps/customer/src/hooks/useNotifications.ts — same
+
+=======================================================
+PLATFORM NOTES
+=======================================================
+
+  3 apps: customer (port 5173), pro (port 5174), admin (port 5175)
+  Supabase project: Gibens-Git's Project (main branch, PRODUCTION)
+  Stripe: NOT set up yet — deferred until closer to go-live
+  accept_bid_direct RPC (migration 008) is the fallback when charge-fee
+    edge function is not deployed
+  Vendor GPS location: required at registration, can update in Profile
+  Existing pro accounts before the GPS fix: must go to Profile →
+    "Update my location" to set location so job feed works
