@@ -115,6 +115,10 @@ export interface Review {
   created_at: string
 }
 
+export interface ReviewWithUser extends Review {
+  users?: { full_name: string }
+}
+
 export interface Category {
   id: number
   name: string

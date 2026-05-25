@@ -1,17 +1,26 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getJobDetail, getJobBidsDetail, acceptBid, deleteJob } from '@gibens/supabase'
+import { getJobDetail, getJobBidsDetail, acceptBid, deleteJob, markJobComplete, createReview, getMyReviewForJob } from '@gibens/supabase'
 import { getAvatarColor, getInitials, formatCurrency, formatRelative, pricingLabels, statusLabels } from '@gibens/ui'
+import { useAuth } from '../hooks/useAuth'
 import type { Job, Bid } from '@gibens/supabase'
 
 export default function JobDetail() {
   const { jobId } = useParams<{ jobId: string }>()
   const nav = useNavigate()
+  const { user } = useAuth()
   const [job, setJob] = useState<Job | null>(null)
   const [bids, setBids] = useState<Bid[]>([])
   const [loading, setLoading] = useState(true)
   const [accepting, setAccepting] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [completing, setCompleting] = useState(false)
+  const [myReview, setMyReview] = useState<{ id: string; rating: number } | null>(null)
+  const [reviewChecked, setReviewChecked] = useState(false)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [submittingReview, setSubmittingReview] = useState(false)
+  const [reviewDone, setReviewDone] = useState(false)
 
   useEffect(() => {
     if (!jobId) return
@@ -26,6 +35,14 @@ export default function JobDetail() {
       setLoading(false)
     })
   }, [jobId])
+
+  useEffect(() => {
+    if (!jobId || !user || job?.status !== 'completed' || reviewChecked) return
+    setReviewChecked(true)
+    getMyReviewForJob(jobId, user.id).then(({ data }) => {
+      setMyReview(data ?? null)
+    })
+  }, [jobId, user, job?.status, reviewChecked])
 
   const handleDelete = async () => {
     if (!jobId || !confirm('Delete this job? This cannot be undone.')) return
@@ -47,6 +64,36 @@ export default function JobDetail() {
     }
   }
 
+  const handleComplete = async () => {
+    if (!jobId || !confirm('Mark this job as complete?')) return
+    setCompleting(true)
+    await markJobComplete(jobId)
+    setJob(prev => prev ? { ...prev, status: 'completed' } : prev)
+    setCompleting(false)
+    setReviewChecked(false)
+  }
+
+  const handleReview = async () => {
+    if (!jobId || !user) return
+    const acceptedBid = bids.find(b => b.status === 'accepted')
+    if (!acceptedBid) return
+    setSubmittingReview(true)
+    const { error } = await createReview({
+      job_id: jobId,
+      reviewer_id: user.id,
+      reviewee_id: acceptedBid.vendor_id,
+      rating: reviewRating,
+      comment: reviewComment.trim() || undefined,
+    })
+    setSubmittingReview(false)
+    if (error) {
+      alert('Could not submit review: ' + error.message)
+    } else {
+      setReviewDone(true)
+      setMyReview({ id: 'done', rating: reviewRating })
+    }
+  }
+
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>Loading...</div>
   if (!job) return (
     <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>
@@ -56,6 +103,7 @@ export default function JobDetail() {
   )
 
   const status = statusLabels[job.status] || { label: job.status, color: 'gray' }
+  const acceptedBid = bids.find(b => b.status === 'accepted')
 
   return (
     <div>
@@ -76,7 +124,6 @@ export default function JobDetail() {
       </div>
 
       <div style={{ padding: '16px 20px' }}>
-        {/* Job info */}
         <div style={{ background: '#f7f7f5', borderRadius: 10, padding: 14, marginBottom: 16 }}>
           <p style={{ fontSize: 14, lineHeight: 1.6, color: '#555' }}>{job.description}</p>
           <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
@@ -90,7 +137,18 @@ export default function JobDetail() {
           </div>
         </div>
 
-        {/* Photos */}
+        {(job.status === 'accepted' || job.status === 'in_progress') && (
+          <button onClick={handleComplete} disabled={completing} style={{
+            width: '100%', background: '#2E7D4F', color: '#fff', border: 'none',
+            borderRadius: 10, padding: '12px 0', fontSize: 14, fontWeight: 500,
+            cursor: 'pointer', marginBottom: 16,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          }}>
+            <i className="ti ti-check" />
+            {completing ? 'Marking complete...' : 'Mark job as complete'}
+          </button>
+        )}
+
         {job.photo_urls?.length > 0 && (
           <div style={{ marginBottom: 16 }}>
             <p style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>Job photos</p>
@@ -102,7 +160,6 @@ export default function JobDetail() {
           </div>
         )}
 
-        {/* Bids */}
         <h2 style={{ fontSize: 15, fontWeight: 500, marginBottom: 12 }}>
           {bids?.length || 0} bid{bids?.length !== 1 ? 's' : ''} received
         </h2>
@@ -166,6 +223,53 @@ export default function JobDetail() {
             </div>
           )
         })}
+
+        {job.status === 'completed' && acceptedBid && (
+          <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: 12, padding: 16, marginTop: 8 }}>
+            <p style={{ fontWeight: 500, fontSize: 15, marginBottom: 4 }}>
+              <i className="ti ti-star" style={{ color: '#E8A020', marginRight: 6 }} />
+              Rate {acceptedBid.users?.full_name?.split(' ')[0] || 'the pro'}
+            </p>
+            {myReview ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                {[1, 2, 3, 4, 5].map(s => (
+                  <i key={s} className={s <= myReview.rating ? 'ti ti-star-filled' : 'ti ti-star'}
+                    style={{ fontSize: 20, color: s <= myReview.rating ? '#E8A020' : '#ddd' }} />
+                ))}
+                <span style={{ fontSize: 13, color: '#888', marginLeft: 4 }}>Already reviewed</span>
+              </div>
+            ) : reviewDone ? (
+              <p style={{ fontSize: 13, color: '#2E7D4F', marginTop: 8 }}>
+                <i className="ti ti-check" /> Review submitted — thanks!
+              </p>
+            ) : (
+              <>
+                <p style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>How was your experience?</p>
+                <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button key={star} onClick={() => setReviewRating(star)}
+                      style={{ background: 'none', border: 'none', fontSize: 32, cursor: 'pointer', padding: '0 2px', color: star <= reviewRating ? '#E8A020' : '#ddd' }}>
+                      <i className={star <= reviewRating ? 'ti ti-star-filled' : 'ti ti-star'} />
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={reviewComment}
+                  onChange={e => setReviewComment(e.target.value)}
+                  placeholder="Leave a comment (optional)..."
+                  rows={3}
+                  style={{ width: '100%', border: '0.5px solid #ddd', borderRadius: 8, padding: '10px 12px', fontSize: 13, resize: 'none', boxSizing: 'border-box', outline: 'none' }}
+                />
+                <button onClick={handleReview} disabled={submittingReview} style={{
+                  marginTop: 10, width: '100%', background: '#E8520A', color: '#fff', border: 'none',
+                  borderRadius: 8, padding: '10px 0', fontSize: 14, fontWeight: 500, cursor: 'pointer',
+                }}>
+                  {submittingReview ? 'Submitting...' : 'Submit review'}
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

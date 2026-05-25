@@ -5,7 +5,8 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@13'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' })
+const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
+const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: '2023-10-16' }) : null
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -39,7 +40,7 @@ serve(async (req) => {
 
     let chargeId: string | null = null
 
-    if (vendorStripeId) {
+    if (vendorStripeId && stripe) {
       // Charge vendor's connected Stripe account
       const charge = await stripe.charges.create({
         amount: feeAmountCents,

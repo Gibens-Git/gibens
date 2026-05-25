@@ -53,6 +53,7 @@ export default function Chat() {
             return [...prev, ...fresh]
           })
           markMessagesRead(jobId, user.id)
+          markJobNotificationsRead(jobId)
         }
       }, 4000)
     })

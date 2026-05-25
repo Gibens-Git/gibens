@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getVendorProfile, supabase } from '@gibens/supabase'
-import { getAvatarColor, getInitials, formatCurrency } from '@gibens/ui'
-import type { VendorProfile as VP } from '@gibens/supabase'
+import { getVendorProfile, getVendorReviews } from '@gibens/supabase'
+import { getAvatarColor, getInitials, formatRelative } from '@gibens/ui'
+import type { VendorProfile as VP, ReviewWithUser } from '@gibens/supabase'
 
 export default function VendorProfile() {
   const { vendorId } = useParams<{ vendorId: string }>()
   const nav = useNavigate()
   const [vendor, setVendor] = useState<VP | null>(null)
+  const [reviews, setReviews] = useState<ReviewWithUser[]>([])
 
   useEffect(() => {
     if (!vendorId) return
     getVendorProfile(vendorId).then(({ data }) => setVendor(data))
+    getVendorReviews(vendorId).then(({ data }) => setReviews((data as ReviewWithUser[]) || []))
   }, [vendorId])
 
   if (!vendor) return <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>Loading...</div>
@@ -61,9 +63,32 @@ export default function VendorProfile() {
           </div>
         )}
 
-        <button onClick={() => nav('/post-job')} style={{ width: '100%', background: '#E8520A', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>
+        <button onClick={() => nav('/post-job')} style={{ width: '100%', background: '#E8520A', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 500, cursor: 'pointer', marginBottom: 24 }}>
           Request a bid from this vendor
         </button>
+
+        <p style={{ fontSize: 15, fontWeight: 500, marginBottom: 12 }}>
+          Reviews ({reviews.length})
+        </p>
+        {reviews.length === 0 ? (
+          <p style={{ fontSize: 13, color: '#aaa', textAlign: 'center', padding: '20px 0' }}>No reviews yet</p>
+        ) : (
+          reviews.map(r => (
+            <div key={r.id} style={{ background: '#f7f7f5', borderRadius: 10, padding: 12, marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>{r.users?.full_name || 'Customer'}</span>
+                <span style={{ fontSize: 11, color: '#aaa' }}>{formatRelative(r.created_at)}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 2, marginBottom: r.comment ? 6 : 0 }}>
+                {[1, 2, 3, 4, 5].map(s => (
+                  <i key={s} className={s <= r.rating ? 'ti ti-star-filled' : 'ti ti-star'}
+                    style={{ fontSize: 14, color: s <= r.rating ? '#E8A020' : '#ddd' }} />
+                ))}
+              </div>
+              {r.comment && <p style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>{r.comment}</p>}
+            </div>
+          ))
+        )}
       </div>
     </div>
   )

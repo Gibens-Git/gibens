@@ -165,15 +165,24 @@ export const updateBid = (bidId: string, updates: {
   supabase.from('bids').update(updates).eq('id', bidId).select().single()
 
 export const acceptBid = async (bidId: string) => {
-  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/charge-fee`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ bid_id: bidId }),
-  })
-  return res.json()
+  try {
+    const session = (await supabase.auth.getSession()).data.session
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/charge-fee`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session?.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ bid_id: bidId }),
+    })
+    if (!res.ok) {
+      const text = await res.text()
+      return { success: false, error: `Server error ${res.status}: ${text.slice(0, 200)}` }
+    }
+    return res.json()
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Network error — check your connection' }
+  }
 }
 
 export const getBookingFeePreview = async (amount: number) => {
@@ -250,6 +259,27 @@ export const uploadAvatar = async (file: File, userId: string) => {
   const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
   return publicUrl
 }
+
+export const markJobComplete = (jobId: string) =>
+  supabase.from('jobs').update({ status: 'completed' }).eq('id', jobId)
+
+export const createReview = (review: { job_id: string; reviewer_id: string; reviewee_id: string; rating: number; comment?: string }) =>
+  supabase.from('reviews').insert(review).select().single()
+
+export const getVendorReviews = (vendorId: string) =>
+  supabase
+    .from('reviews')
+    .select('*, users!reviewer_id(full_name)')
+    .eq('reviewee_id', vendorId)
+    .order('created_at', { ascending: false })
+
+export const getMyReviewForJob = (jobId: string, reviewerId: string) =>
+  supabase
+    .from('reviews')
+    .select('id, rating')
+    .eq('job_id', jobId)
+    .eq('reviewer_id', reviewerId)
+    .maybeSingle()
 
 // ---- ADMIN ----
 

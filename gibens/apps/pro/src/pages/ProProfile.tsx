@@ -1,8 +1,25 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { signOut, getVendorProfile, updateVendorProfile, supabase } from '@gibens/supabase'
-import { getAvatarColor, getInitials, CATEGORIES } from '@gibens/ui'
+import { signOut, getVendorProfile, updateVendorProfile, getVendorReviews, supabase } from '@gibens/supabase'
+import { getAvatarColor, getInitials, formatRelative, CATEGORIES } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
+import type { ReviewWithUser } from '@gibens/supabase'
+
+function useGPS() {
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null)
+
+  const detect = () => {
+    setStatus('loading')
+    navigator.geolocation.getCurrentPosition(
+      pos => { setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }); setStatus('done') },
+      () => setStatus('error'),
+      { timeout: 10000 }
+    )
+  }
+
+  return { status, coords, detect }
+}
 
 export default function ProProfile() {
   const nav = useNavigate()
@@ -14,6 +31,11 @@ export default function ProProfile() {
   const [creating, setCreating] = useState(false)
   const [radius, setRadius] = useState(15)
   const [saving, setSaving] = useState(false)
+  const [updatingLoc, setUpdatingLoc] = useState(false)
+  const [locUpdated, setLocUpdated] = useState(false)
+  const [reviews, setReviews] = useState<ReviewWithUser[]>([])
+  const createGPS = useGPS()
+  const updateGPS = useGPS()
 
   useEffect(() => {
     if (!user) return
@@ -25,17 +47,20 @@ export default function ProProfile() {
         setProfileMissing(true)
       }
     })
+    getVendorReviews(user.id).then(({ data }) => setReviews((data as ReviewWithUser[]) || []))
   }, [user])
 
   const createProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !newCategory) return
+    if (!createGPS.coords) { alert('Please detect your location first — it is required to receive job leads.'); return }
     setCreating(true)
     await supabase.from('vendor_profiles').insert({
       user_id: user.id,
       category: newCategory,
       travel_radius_mi: parseInt(newRadius),
       status: 'pending',
+      location: `POINT(${createGPS.coords.lon} ${createGPS.coords.lat})`,
     })
     const { data } = await getVendorProfile(user.id)
     if (data) { setVendor(data as Record<string, unknown>); setRadius(parseInt(newRadius)); setProfileMissing(false) }
@@ -47,6 +72,14 @@ export default function ProProfile() {
     setSaving(true)
     await updateVendorProfile(user.id, { travel_radius_mi: radius })
     setSaving(false)
+  }
+
+  const handleUpdateLocation = async () => {
+    if (!user || !updateGPS.coords) return
+    setUpdatingLoc(true)
+    await updateVendorProfile(user.id, { location: `POINT(${updateGPS.coords.lon} ${updateGPS.coords.lat})` })
+    setUpdatingLoc(false)
+    setLocUpdated(true)
   }
 
   if (!user) return null
@@ -69,6 +102,28 @@ export default function ProProfile() {
         <div>
           <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>Travel radius: {newRadius} miles</label>
           <input type="range" min="5" max="100" step="5" value={newRadius} onChange={e => setNewRadius(e.target.value)} style={{ width: '100%' }} />
+        </div>
+        <div>
+          <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>
+            Your location <span style={{ color: '#E24B4A' }}>*</span>
+          </label>
+          {createGPS.status === 'done' ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#EAF3DE', borderRadius: 8, padding: '10px 12px' }}>
+              <i className="ti ti-map-pin" style={{ color: '#3B6D11', fontSize: 16 }} />
+              <span style={{ fontSize: 13, color: '#3B6D11', flex: 1 }}>Location detected</span>
+              <button type="button" onClick={createGPS.detect}
+                style={{ background: 'none', border: 'none', fontSize: 12, color: '#3B6D11', cursor: 'pointer', textDecoration: 'underline' }}>
+                Re-detect
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={createGPS.detect} disabled={createGPS.status === 'loading'}
+              style={{ width: '100%', background: createGPS.status === 'error' ? '#FEF3C7' : '#f4f4f2', border: createGPS.status === 'error' ? '0.5px solid #FCD34D' : '0.5px solid #ccc', borderRadius: 10, padding: '10px 14px', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: createGPS.status === 'error' ? '#92400E' : '#555' }}>
+              <i className="ti ti-map-pin" />
+              {createGPS.status === 'loading' ? 'Detecting...' : createGPS.status === 'error' ? 'Could not detect — tap to retry' : 'Detect my location'}
+            </button>
+          )}
+          <p style={{ fontSize: 12, color: '#aaa', marginTop: 5 }}>Used to match you with nearby job leads</p>
         </div>
         <button type="submit" disabled={creating}
           style={{ background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 500 }}>
@@ -109,8 +164,32 @@ export default function ProProfile() {
               {saving ? 'Saving...' : 'Save radius'}
             </button>
           </div>
+
+          {/* Location update */}
+          <div style={{ padding: '12px 14px', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+            <p style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>Service location</p>
+            {locUpdated ? (
+              <p style={{ fontSize: 13, color: '#2E7D4F' }}><i className="ti ti-check" /> Location updated</p>
+            ) : updateGPS.status === 'done' ? (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <span style={{ fontSize: 13, color: '#3B6D11', flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <i className="ti ti-map-pin" /> Location detected
+                </span>
+                <button onClick={handleUpdateLocation} disabled={updatingLoc}
+                  style={{ background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: 'pointer' }}>
+                  {updatingLoc ? 'Saving...' : 'Save location'}
+                </button>
+              </div>
+            ) : (
+              <button onClick={updateGPS.detect} disabled={updateGPS.status === 'loading'}
+                style={{ background: updateGPS.status === 'error' ? '#FEF3C7' : '#f4f4f2', border: updateGPS.status === 'error' ? '0.5px solid #FCD34D' : '0.5px solid #ccc', borderRadius: 8, padding: '7px 14px', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: updateGPS.status === 'error' ? '#92400E' : '#555' }}>
+                <i className="ti ti-map-pin" />
+                {updateGPS.status === 'loading' ? 'Detecting...' : updateGPS.status === 'error' ? 'Retry location detect' : 'Update my location'}
+              </button>
+            )}
+          </div>
+
           {[
-            { icon: 'star', label: `Reviews (${vendor?.total_reviews || 0})` },
             { icon: 'credit-card', label: 'Payout method' },
             { icon: 'shield', label: 'Verification documents' },
             { icon: 'bell', label: 'Notifications' },
@@ -124,6 +203,31 @@ export default function ProProfile() {
             </div>
           ))}
         </div>
+
+        <p style={{ fontSize: 15, fontWeight: 500, marginBottom: 12 }}>
+          Reviews ({reviews.length})
+        </p>
+        {reviews.length === 0 ? (
+          <p style={{ fontSize: 13, color: '#aaa', textAlign: 'center', padding: '16px 0', marginBottom: 16 }}>No reviews yet</p>
+        ) : (
+          <div style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {reviews.map(r => (
+              <div key={r.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: 10, padding: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>{r.users?.full_name || 'Customer'}</span>
+                  <span style={{ fontSize: 11, color: '#aaa' }}>{formatRelative(r.created_at)}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 2, marginBottom: r.comment ? 6 : 0 }}>
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <i key={s} className={s <= r.rating ? 'ti ti-star-filled' : 'ti ti-star'}
+                      style={{ fontSize: 14, color: s <= r.rating ? '#E8A020' : '#ddd' }} />
+                  ))}
+                </div>
+                {r.comment && <p style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>{r.comment}</p>}
+              </div>
+            ))}
+          </div>
+        )}
 
         <button onClick={async () => { await signOut(); nav('/login') }}
           style={{ width: '100%', padding: '12px 0', background: 'none', border: '0.5px solid #E24B4A', borderRadius: 10, color: '#E24B4A', fontSize: 14, cursor: 'pointer' }}>
