@@ -30,7 +30,7 @@ export function useNotifications(userId: string | undefined) {
       .then(({ data }) => {
         if (data) {
           setNotifications(data)
-          setUnreadCount(data.filter(n => !n.is_read).length)
+          setUnreadCount(data.filter(n => !n.is_read && n.type === 'new_message').length)
           lastNotifAt.current = data.length > 0 ? data[0].created_at : startedAt
         } else {
           lastNotifAt.current = startedAt
@@ -41,7 +41,7 @@ export function useNotifications(userId: string | undefined) {
     const channel = subscribeToNotifications(userId, (n) => {
       const notif = n as Notification
       setNotifications(prev => [notif, ...prev])
-      setUnreadCount(c => c + 1)
+      if (notif.type === 'new_message') setUnreadCount(c => c + 1)
       lastNotifAt.current = notif.created_at
       showToast(notif)
     })
@@ -70,6 +70,7 @@ export function useNotifications(userId: string | undefined) {
         .from('notifications')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
+        .eq('type', 'new_message')
         .eq('is_read', false)
 
       if (count !== null) setUnreadCount(count)
