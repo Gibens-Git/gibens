@@ -17,9 +17,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setAuthUser(session?.user ?? null)
       if (session?.user) {
+        if (event !== 'TOKEN_REFRESHED') setLoading(true)
         fetchProfile(session.user.id)
       } else {
         setUser(null)
@@ -31,36 +32,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function fetchProfile(id: string) {
     try {
-      const fetchRow = supabase.from('users').select('*').eq('id', id).single()
-      const timeoutErr = new Promise<never>((_, rej) =>
-        setTimeout(() => rej(new Error('timeout')), 8000)
-      )
-      const { data } = await Promise.race([fetchRow, timeoutErr])
+      // Use maybeSingle so missing row returns null instead of an error
+      const { data } = await supabase.from('users').select('*').eq('id', id).maybeSingle()
 
       if (data) {
         setUser(data as User)
+        return
+      }
+
+      // Row missing — auto-create from auth metadata (handles Google OAuth + email signup)
+      const { data: { user: au } } = await supabase.auth.getUser()
+      if (!au) { setUser(null); return }
+
+      const meta = au.user_metadata ?? {}
+      const fullName = (meta.full_name as string) || (meta.name as string) || au.email || 'User'
+      const { data: upserted } = await supabase
+        .from('users')
+        .upsert({ id, role: ((meta.role as string) ?? 'customer') as User['role'], full_name: fullName }, { onConflict: 'id' })
+        .select()
+        .single()
+
+      if (upserted) {
+        setUser(upserted as User)
       } else {
-        // Row missing — auto-create from auth metadata
-        const { data: { user: au } } = await supabase.auth.getUser()
-        if (au) {
-          const meta = au.user_metadata ?? {}
-          const { data: created } = await supabase
-            .from('users')
-            .insert({
-              id,
-              role: ((meta.role as string) ?? 'customer') as User['role'],
-              full_name: (meta.full_name as string) || au.email || 'User',
-            })
-            .select()
-            .single()
-          setUser((created as User) ?? null)
-        } else {
-          setUser(null)
-        }
+        // Upsert succeeded but select returned nothing — refetch
+        const { data: refetched } = await supabase.from('users').select('*').eq('id', id).maybeSingle()
+        setUser((refetched as User) ?? null)
       }
     } catch (err) {
       console.error('[Auth] fetchProfile error:', err)
-      setUser(null)
+      // Last-chance fetch in case the row was created despite the error
+      const { data } = await supabase.from('users').select('*').eq('id', id).maybeSingle()
+      setUser((data as User) ?? null)
     } finally {
       setLoading(false)
     }

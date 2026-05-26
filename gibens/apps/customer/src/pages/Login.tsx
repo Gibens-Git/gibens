@@ -52,8 +52,6 @@ export default function Login() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {[
           { label: 'Google', icon: 'brand-google', action: signInWithGoogle },
-          { label: 'Apple', icon: 'brand-apple', action: signInWithApple },
-          { label: 'Microsoft', icon: 'brand-windows', action: signInWithMicrosoft },
         ].map(p => (
           <button key={p.label} onClick={p.action} type="button" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
