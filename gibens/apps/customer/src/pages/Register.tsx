@@ -36,7 +36,19 @@ export default function Register() {
   if (emailSent) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 24, background: '#0D0D0D' }}>
-        <h1 style={{ fontSize: 32, fontWeight: 700, color: '#E8520A', marginBottom: 16, textShadow: '0 0 28px rgba(232,82,10,0.45)' }}>Gibens.</h1>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 212 56" height="38" fill="none" style={{ marginBottom: 16 }}>
+          <defs><linearGradient id="lb-reg-sent" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#FF6535"/><stop offset="1" stopColor="#D94A06"/>
+          </linearGradient></defs>
+          <rect width="56" height="56" rx="13" fill="url(#lb-reg-sent)"/>
+          <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+            fill="none" stroke="white" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <text x="70" y="28" dominantBaseline="middle"
+            fontFamily="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+            fontSize="28" fontWeight="800" letterSpacing="-1">
+            <tspan fill="#E8520A">g</tspan><tspan fill="#ffffff">ibens</tspan>
+          </text>
+        </svg>
         <p style={{ fontSize: 16, color: '#fff', marginBottom: 8, fontWeight: 500 }}>Check your email</p>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
           We sent a confirmation link to <strong style={{ color: '#fff' }}>{form.email}</strong>.<br />
@@ -60,7 +72,19 @@ export default function Register() {
       <div style={{ position: 'fixed', top: -120, left: '50%', transform: 'translateX(-50%)', width: 400, height: 300, background: 'radial-gradient(ellipse, rgba(232,82,10,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
       <div style={{ marginBottom: 32, position: 'relative' }}>
-        <h1 style={{ fontSize: 32, fontWeight: 700, color: '#E8520A', letterSpacing: '-0.5px', textShadow: '0 0 28px rgba(232,82,10,0.45)' }}>Gibens.</h1>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 212 56" height="38" fill="none">
+          <defs><linearGradient id="lb-reg" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#FF6535"/><stop offset="1" stopColor="#D94A06"/>
+          </linearGradient></defs>
+          <rect width="56" height="56" rx="13" fill="url(#lb-reg)"/>
+          <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+            fill="none" stroke="white" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <text x="70" y="28" dominantBaseline="middle"
+            fontFamily="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+            fontSize="28" fontWeight="800" letterSpacing="-1">
+            <tspan fill="#E8520A">g</tspan><tspan fill="#ffffff">ibens</tspan>
+          </text>
+        </svg>
         <p style={{ color: 'rgba(255,255,255,0.45)', marginTop: 6, fontSize: 15 }}>Create your free account</p>
       </div>
 

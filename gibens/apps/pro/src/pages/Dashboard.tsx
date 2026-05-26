@@ -84,7 +84,23 @@ export default function Dashboard() {
       <div style={{ background: '#0F4C8A', padding: '14px 20px 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
-            <h1 style={{ fontSize: 18, fontWeight: 500, color: '#fff' }}>Gibens <span style={{ opacity: 0.6, fontSize: 12, background: 'rgba(255,255,255,0.15)', padding: '1px 8px', borderRadius: 20 }}>Pro</span></h1>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226 56" height="28" fill="none">
+              <defs><linearGradient id="lb-dash" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#FF6535"/><stop offset="1" stopColor="#D94A06"/>
+              </linearGradient></defs>
+              <rect width="56" height="56" rx="13" fill="url(#lb-dash)"/>
+              <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+                fill="none" stroke="white" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <text x="70" y="28" dominantBaseline="middle"
+                fontFamily="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+                fontSize="28" fontWeight="800" letterSpacing="-1">
+                <tspan fill="#E8520A">g</tspan><tspan fill="#ffffff">ibens</tspan>
+              </text>
+              <rect x="172" y="16" width="46" height="24" rx="12" fill="rgba(255,255,255,0.2)"/>
+              <text x="195" y="28" dominantBaseline="middle" textAnchor="middle"
+                fontFamily="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+                fontSize="13" fontWeight="600" fill="rgba(255,255,255,0.9)">Pro</text>
+            </svg>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>Good morning, {user?.full_name?.split(' ')[0]}</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
