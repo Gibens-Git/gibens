@@ -302,6 +302,13 @@ export const getVendorReviews = (vendorId: string) =>
     .eq('reviewee_id', vendorId)
     .order('created_at', { ascending: false })
 
+export const getCustomerReviews = (customerId: string) =>
+  supabase
+    .from('reviews')
+    .select('*, users!reviewer_id(full_name)')
+    .eq('reviewee_id', customerId)
+    .order('created_at', { ascending: false })
+
 export const getMyReviewForJob = (jobId: string, reviewerId: string) =>
   supabase
     .from('reviews')
