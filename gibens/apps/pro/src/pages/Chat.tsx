@@ -132,9 +132,13 @@ export default function Chat() {
             <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%', alignSelf: isMe ? 'flex-end' : 'flex-start' }}>
               {!isMe && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: bg, color: tc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 500 }}>
-                    {getInitials(msg.users?.full_name || '?')}
-                  </div>
+                  {msg.users?.avatar_url ? (
+                    <img src={msg.users.avatar_url} alt={msg.users?.full_name || ''} style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: bg, color: tc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 500 }}>
+                      {getInitials(msg.users?.full_name || '?')}
+                    </div>
+                  )}
                   <span style={{ fontSize: 12, color: '#888' }}>{msg.users?.full_name}</span>
                 </div>
               )}

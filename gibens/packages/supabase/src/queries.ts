@@ -283,9 +283,9 @@ export const uploadReviewPhoto = async (file: File, reviewKey: string) => {
 
 export const uploadAvatar = async (file: File, userId: string) => {
   const ext = file.name.split('.').pop()
-  const path = `${userId}/avatar.${ext}`
-  await supabase.storage.from('avatars').upload(path, file, { upsert: true })
-  const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+  const path = `avatars/${userId}/avatar.${ext}`
+  await supabase.storage.from('job-photos').upload(path, file, { upsert: true })
+  const { data: { publicUrl } } = supabase.storage.from('job-photos').getPublicUrl(path)
   return publicUrl
 }
 
