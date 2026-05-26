@@ -56,7 +56,6 @@ export default function Support() {
       '\nHelp with: posting jobs, understanding bids, accepting a pro, chat, completing jobs, reviews, booking fees, and account questions. Keep answers concise and friendly.',
     ].filter(Boolean).join('\n')
 
-    // Skip the hardcoded WELCOME message — only send the real conversation
     const apiMessages = newMessages.slice(1)
 
     try {
@@ -77,7 +76,6 @@ export default function Support() {
       })
       const data = await res.json()
       if (!res.ok) {
-        console.error('[Support] API error:', res.status, JSON.stringify(data))
         setMessages(prev => [...prev, { role: 'assistant', content: `API error ${res.status}: ${data.error?.message ?? JSON.stringify(data)}` }])
         setLoading(false)
         return
@@ -85,7 +83,6 @@ export default function Support() {
       const reply: string = data.content?.[0]?.text ?? "Sorry, I couldn't get a response. Please try again."
       setMessages(prev => [...prev, { role: 'assistant', content: reply }])
     } catch (e) {
-      console.error('[Support] fetch error:', e)
       setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again or email support@gibens.com.' }])
     }
     setLoading(false)
@@ -99,17 +96,17 @@ export default function Support() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', flexShrink: 0 }}>
-        <button onClick={() => nav(-1)} style={{ background: 'none', border: 'none', fontSize: 20, color: '#888', cursor: 'pointer', padding: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0D0D0D' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: '0.5px solid rgba(255,255,255,0.07)', background: '#141414', flexShrink: 0 }}>
+        <button onClick={() => nav(-1)} style={{ background: 'none', border: 'none', fontSize: 20, color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: 0 }}>
           <i className="ti ti-arrow-left" />
         </button>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 16, fontWeight: 500 }}>Support</p>
-          <p style={{ fontSize: 12, color: '#888' }}>Gibens AI assistant</p>
+          <p style={{ fontSize: 16, fontWeight: 600, color: '#fff' }}>Support</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Gibens AI assistant</p>
         </div>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#FEF0EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <i className="ti ti-sparkles" style={{ color: '#E8520A', fontSize: 18 }} />
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(232,82,10,0.15)', border: '0.5px solid rgba(232,82,10,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <i className="ti ti-sparkles" style={{ color: '#E8520A', fontSize: 17 }} />
         </div>
       </div>
 
@@ -120,11 +117,12 @@ export default function Support() {
               maxWidth: '80%',
               padding: '10px 14px',
               borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-              background: msg.role === 'user' ? '#E8520A' : '#f0f0ee',
-              color: msg.role === 'user' ? '#fff' : '#1a1a1a',
+              background: msg.role === 'user' ? '#E8520A' : 'rgba(255,255,255,0.08)',
+              color: '#fff',
               fontSize: 14,
               lineHeight: 1.55,
               whiteSpace: 'pre-wrap',
+              boxShadow: msg.role === 'user' ? '0 0 14px rgba(232,82,10,0.3)' : 'none',
             }}>
               {msg.content}
             </div>
@@ -132,7 +130,7 @@ export default function Support() {
         ))}
         {loading && (
           <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-            <div style={{ padding: '10px 16px', borderRadius: '18px 18px 18px 4px', background: '#f0f0ee', fontSize: 18, color: '#999', letterSpacing: 2 }}>
+            <div style={{ padding: '10px 16px', borderRadius: '18px 18px 18px 4px', background: 'rgba(255,255,255,0.08)', fontSize: 18, color: 'rgba(255,255,255,0.4)', letterSpacing: 3 }}>
               •••
             </div>
           </div>
@@ -140,26 +138,28 @@ export default function Support() {
         <div ref={bottomRef} />
       </div>
 
-      <div style={{ padding: '12px 16px 28px', borderTop: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', display: 'flex', gap: 10, alignItems: 'flex-end', flexShrink: 0 }}>
+      <div style={{ padding: '12px 16px 28px', borderTop: '0.5px solid rgba(255,255,255,0.07)', background: '#141414', display: 'flex', gap: 10, alignItems: 'flex-end', flexShrink: 0 }}>
         <textarea
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask anything..."
           rows={1}
-          style={{ flex: 1, border: '0.5px solid #ddd', borderRadius: 20, padding: '10px 14px', fontSize: 14, resize: 'none', outline: 'none', background: '#f9f9f9', maxHeight: 120, overflowY: 'auto', fontFamily: 'inherit' }}
+          style={{ flex: 1, background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '10px 14px', fontSize: 14, resize: 'none', outline: 'none', color: '#fff', maxHeight: 120, overflowY: 'auto', fontFamily: 'inherit' }}
         />
         <button
           onClick={send}
           disabled={loading || !input.trim()}
           style={{
             width: 40, height: 40, borderRadius: '50%',
-            background: input.trim() && !loading ? '#E8520A' : '#eee',
+            background: input.trim() && !loading ? '#E8520A' : 'rgba(255,255,255,0.08)',
             border: 'none',
-            color: input.trim() && !loading ? '#fff' : '#bbb',
+            color: input.trim() && !loading ? '#fff' : 'rgba(255,255,255,0.25)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: input.trim() && !loading ? 'pointer' : 'default',
-            flexShrink: 0, transition: 'background 0.15s',
+            flexShrink: 0,
+            boxShadow: input.trim() && !loading ? '0 0 14px rgba(232,82,10,0.4)' : 'none',
+            transition: 'background 0.15s',
           }}
         >
           <i className="ti ti-send" style={{ fontSize: 18 }} />

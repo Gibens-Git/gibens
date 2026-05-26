@@ -35,7 +35,6 @@ export default function Chat() {
         lastMsgAt.current = new Date().toISOString()
       }
 
-      // Start polling after initial load so we only fetch genuinely new messages
       pollRef.current = setInterval(async () => {
         const { data: newMsgs } = await supabase
           .from('messages')
@@ -58,7 +57,6 @@ export default function Chat() {
       }, 4000)
     })
 
-    // Realtime subscription — works when messages table is in supabase_realtime publication
     const channel = subscribeToMessages(jobId, (msg) => {
       setMessages(prev => {
         const m = msg as Message
@@ -87,7 +85,6 @@ export default function Chat() {
     setSending(true)
     const { data: msg, error } = await sendMessage(jobId, user.id, body)
     if (error) {
-      console.error('[Chat] send error:', error)
       setSendError(error.message || 'Failed to send — check your connection')
     } else {
       setText('')
@@ -111,25 +108,24 @@ export default function Chat() {
         lastMsgAt.current = (msg as Message).created_at
       }
     } catch (err) {
-      console.error('[Chat] photo upload error:', err)
       setSendError('Failed to send photo — ' + (err instanceof Error ? err.message : String(err)))
     }
     setSending(false)
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', flexShrink: 0 }}>
-        <button onClick={() => nav(-1)} style={{ background: 'none', border: 'none', fontSize: 20, color: '#888' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0D0D0D' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: '0.5px solid rgba(255,255,255,0.07)', background: '#141414', flexShrink: 0 }}>
+        <button onClick={() => nav(-1)} style={{ background: 'none', border: 'none', fontSize: 20, color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
           <i className="ti ti-arrow-left" />
         </button>
         <div style={{ flex: 1 }}>
-          <p style={{ fontWeight: 500, fontSize: 14 }}>Job chat</p>
-          <p style={{ fontSize: 12, color: '#888' }}>{jobTitle}</p>
+          <p style={{ fontWeight: 500, fontSize: 14, color: '#fff' }}>Job chat</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{jobTitle}</p>
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12, background: '#f7f7f5' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {messages.map((msg) => {
           const isMe = msg.sender_id === user?.id
           const { bg, tc } = getAvatarColor(msg.users?.full_name || '')
@@ -140,7 +136,7 @@ export default function Chat() {
                   <div style={{ width: 24, height: 24, borderRadius: '50%', background: bg, color: tc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 500 }}>
                     {getInitials(msg.users?.full_name || '?')}
                   </div>
-                  <span style={{ fontSize: 12, color: '#888' }}>{msg.users?.full_name}</span>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{msg.users?.full_name}</span>
                 </div>
               )}
               {msg.photo_url && (
@@ -151,15 +147,15 @@ export default function Chat() {
                   padding: '10px 14px', borderRadius: 16,
                   borderBottomLeftRadius: isMe ? 16 : 4,
                   borderBottomRightRadius: isMe ? 4 : 16,
-                  background: isMe ? '#E8520A' : '#fff',
-                  color: isMe ? '#fff' : '#333',
+                  background: isMe ? '#E8520A' : 'rgba(255,255,255,0.08)',
+                  color: '#fff',
                   fontSize: 14, lineHeight: 1.5,
-                  border: isMe ? 'none' : '0.5px solid rgba(0,0,0,0.08)',
+                  boxShadow: isMe ? '0 0 14px rgba(232,82,10,0.25)' : 'none',
                 }}>
                   {msg.body}
                 </div>
               )}
-              <span style={{ fontSize: 11, color: '#aaa', marginTop: 3 }}>{formatTime(msg.created_at)}</span>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>{formatTime(msg.created_at)}</span>
             </div>
           )
         })}
@@ -167,21 +163,21 @@ export default function Chat() {
       </div>
 
       {sendError && (
-        <div style={{ background: '#FEE2E2', borderTop: '0.5px solid #FECACA', padding: '8px 16px', fontSize: 12, color: '#B91C1C', flexShrink: 0 }}>
+        <div style={{ background: 'rgba(255,107,107,0.1)', borderTop: '0.5px solid rgba(255,107,107,0.2)', padding: '8px 16px', fontSize: 12, color: '#FF8A8A', flexShrink: 0 }}>
           {sendError}
         </div>
       )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderTop: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', flexShrink: 0 }}>
-        <label style={{ cursor: 'pointer', color: '#888', fontSize: 22 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px 20px', borderTop: '0.5px solid rgba(255,255,255,0.07)', background: '#141414', flexShrink: 0 }}>
+        <label style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 22 }}>
           <i className="ti ti-photo" />
           <input type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
         </label>
         <input value={text} onChange={e => setText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
           placeholder="Type a message..."
-          style={{ flex: 1, border: '0.5px solid #ddd', borderRadius: 20, padding: '9px 14px', fontSize: 14, outline: 'none' }} />
+          style={{ flex: 1, background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '9px 14px', fontSize: 14, outline: 'none', color: '#fff' }} />
         <button onClick={handleSend} disabled={!text.trim() || sending}
-          style={{ width: 36, height: 36, borderRadius: '50%', background: '#E8520A', border: 'none', color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          style={{ width: 36, height: 36, borderRadius: '50%', background: text.trim() && !sending ? '#E8520A' : 'rgba(255,255,255,0.1)', border: 'none', color: text.trim() && !sending ? '#fff' : 'rgba(255,255,255,0.3)', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: text.trim() && !sending ? '0 0 12px rgba(232,82,10,0.4)' : 'none', transition: 'background 0.15s' }}>
           <i className="ti ti-send" />
         </button>
       </div>

@@ -30,67 +30,71 @@ export default function Home() {
   const locationLabel = location?.address || (location ? 'Your location' : 'Detecting location...')
 
   return (
-    <div style={{ background: '#f4f4f2', minHeight: '100vh', paddingBottom: 16 }}>
+    <div style={{ background: '#0D0D0D', minHeight: '100vh', paddingBottom: 16 }}>
 
       {/* Hero */}
-      <div style={{ background: 'linear-gradient(135deg, #E8520A 0%, #d44000 100%)', paddingBottom: 32 }}>
-        {/* Top bar */}
+      <div style={{
+        background: 'radial-gradient(ellipse 100% 60% at 50% 0%, rgba(232,82,10,0.22) 0%, transparent 70%), #141414',
+        paddingBottom: 32,
+        borderBottom: '0.5px solid rgba(255,255,255,0.07)',
+      }}>
         <div className="page-wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px' }}>
-          <span style={{ fontSize: 24, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px' }}>Gibens.</span>
-          <div style={{ display: 'flex', gap: 4 }}>
+          <span style={{ fontSize: 24, fontWeight: 700, color: '#E8520A', letterSpacing: '-0.3px', textShadow: '0 0 20px rgba(232,82,10,0.4)' }}>Gibens.</span>
+          <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => nav('/messages')} style={{
-              background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 10,
-              width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontSize: 18,
+              background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.1)',
+              borderRadius: 10, width: 38, height: 38,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'rgba(255,255,255,0.7)', fontSize: 18,
             }}>
               <i className="ti ti-bell" />
             </button>
             <button onClick={() => nav('/profile')} style={{
-              background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 10,
-              width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontSize: 18,
+              background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.1)',
+              borderRadius: 10, width: 38, height: 38,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'rgba(255,255,255,0.7)', fontSize: 18,
             }}>
               <i className="ti ti-user-circle" />
             </button>
           </div>
         </div>
 
-        {/* Greeting + search */}
         <div className="page-wrap" style={{ padding: '4px 20px 0' }}>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 6 }}>
             Welcome back, {firstName}
           </p>
-          <p style={{ fontSize: 22, fontWeight: 600, color: '#fff', marginBottom: 18, lineHeight: 1.2 }}>
+          <p style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginBottom: 20, lineHeight: 1.2, letterSpacing: '-0.3px' }}>
             Find a local pro<br />for any job
           </p>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', borderRadius: 14, padding: '12px 16px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '12px 16px' }}>
             <i className="ti ti-search" style={{ color: '#E8520A', fontSize: 18, flexShrink: 0 }} />
             <input
               placeholder="Search services..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 15, color: '#333', background: 'transparent' }}
+              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 15, color: '#fff', background: 'transparent' }}
             />
           </div>
 
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 12, display: 'flex', alignItems: 'center', gap: 5 }}>
-            <i className="ti ti-map-pin" style={{ fontSize: 13 }} />
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 12, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <i className="ti ti-map-pin" style={{ fontSize: 13, color: '#E8520A' }} />
             {locationLabel} · Within 25 miles
           </p>
         </div>
       </div>
 
       {/* Categories */}
-      <div style={{ background: '#fff', marginTop: 12, paddingTop: 20, paddingBottom: 20 }}>
+      <div style={{ background: '#141414', marginTop: 12, paddingTop: 20, paddingBottom: 20, borderTop: '0.5px solid rgba(255,255,255,0.06)', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
         <div className="page-wrap">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <span style={{ fontSize: 16, fontWeight: 600, color: '#1A1410' }}>
+            <span style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>
               {search ? `Results for "${search}"` : 'Categories'}
             </span>
             {!search && (
               <button onClick={() => setShowAllCats(v => !v)} style={{
-                background: 'none', border: 'none', color: '#E8520A', fontSize: 13, fontWeight: 500,
+                background: 'none', border: 'none', color: '#E8520A', fontSize: 13, fontWeight: 600,
               }}>
                 {showAllCats ? 'Show less' : 'See all'}
               </button>
@@ -102,7 +106,7 @@ export default function Home() {
                 <div className="cat-icon">
                   <i className={`ti ti-${cat.icon}`} />
                 </div>
-                <span style={{ fontSize: 11, color: '#555', textAlign: 'center', lineHeight: 1.3, fontWeight: 500 }}>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 1.3, fontWeight: 500 }}>
                   {cat.name}
                 </span>
               </div>
@@ -117,7 +121,7 @@ export default function Home() {
           width: '100%', background: '#E8520A', color: '#fff', border: 'none',
           borderRadius: 14, padding: '15px 20px', fontSize: 15, fontWeight: 600,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          boxShadow: '0 4px 14px rgba(232,82,10,0.35)',
+          boxShadow: '0 0 30px rgba(232,82,10,0.4)',
         }}>
           <i className="ti ti-plus" /> Post a new job
         </button>
@@ -125,9 +129,9 @@ export default function Home() {
 
       {/* Nearby vendors */}
       {vendors.length > 0 && (
-        <div style={{ background: '#fff', paddingTop: 20, paddingBottom: 20 }}>
+        <div style={{ background: '#141414', paddingTop: 20, paddingBottom: 20, borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
           <div className="page-wrap">
-            <p style={{ fontSize: 16, fontWeight: 600, color: '#1A1410', marginBottom: 14 }}>
+            <p style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 14 }}>
               Available nearby
             </p>
             <div className="vendor-grid">
@@ -144,22 +148,23 @@ export default function Home() {
                       {getInitials(v.users?.full_name || '?')}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontWeight: 600, fontSize: 14, color: '#1A1410', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <p style={{ fontWeight: 600, fontSize: 14, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {v.users?.full_name}
                       </p>
-                      <p style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>
                         {v.category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                        <span style={{ fontSize: 12, color: '#666', display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', display: 'flex', alignItems: 'center', gap: 3 }}>
                           <i className="ti ti-star-filled" style={{ color: '#F5A623', fontSize: 12 }} />
-                          <strong>{v.avg_rating}</strong>
-                          <span style={{ color: '#aaa' }}>({v.total_reviews})</span>
+                          <strong style={{ color: '#fff' }}>{v.avg_rating}</strong>
+                          <span style={{ color: 'rgba(255,255,255,0.3)' }}>({v.total_reviews})</span>
                         </span>
                         <span style={{
-                          fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 500,
-                          background: v.is_available ? '#EAF3DE' : '#f0f0f0',
-                          color: v.is_available ? '#3B6D11' : '#888',
+                          fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 500,
+                          background: v.is_available ? 'rgba(39,80,10,0.35)' : 'rgba(255,255,255,0.07)',
+                          color: v.is_available ? '#7BC95A' : 'rgba(255,255,255,0.38)',
+                          border: `0.5px solid ${v.is_available ? 'rgba(80,160,40,0.3)' : 'rgba(255,255,255,0.08)'}`,
                         }}>
                           {v.is_available ? 'Available' : 'Busy'}
                         </span>
