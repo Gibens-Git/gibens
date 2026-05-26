@@ -17,7 +17,10 @@
       "Bash(dir \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\pro\")",
       "Bash(dir \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\customer\\\\public\")",
       "Bash(dir \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\pro\\\\public\")",
-      "mcp__Claude_in_Chrome__tabs_context_mcp"
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(curl -s http://localhost:5180/logo.svg)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5180/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5180/index.html)"
     ]
   }
 }
