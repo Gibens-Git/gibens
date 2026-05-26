@@ -103,11 +103,16 @@ export default function Chat() {
     const file = e.target.files?.[0]
     if (!file || !jobId || !user) return
     setSending(true)
-    const url = await uploadJobPhoto(file, jobId)
-    const { data: msg } = await sendMessage(jobId, user.id, undefined, url)
-    if (msg) {
-      setMessages(prev => [...prev, msg as Message])
-      lastMsgAt.current = (msg as Message).created_at
+    try {
+      const url = await uploadJobPhoto(file, jobId)
+      const { data: msg } = await sendMessage(jobId, user.id, undefined, url)
+      if (msg) {
+        setMessages(prev => [...prev, msg as Message])
+        lastMsgAt.current = (msg as Message).created_at
+      }
+    } catch (err) {
+      console.error('[Chat] photo upload error:', err)
+      setSendError('Failed to send photo — ' + (err instanceof Error ? err.message : String(err)))
     }
     setSending(false)
   }
