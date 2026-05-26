@@ -1,0 +1,133 @@
+SESSION NOTES — 2026-05-25
+Gibens Platform — Customer / Pro / Admin apps
+Repo: C:\gibens\gibens
+Branch: master
+
+=======================================================
+WHAT WAS DONE THIS SESSION
+=======================================================
+
+1. FIXED: DEV SERVERS NOT STARTING
+   Root cause: root package.json is at C:\gibens\gibens but the apps
+   are inside C:\gibens\gibens\gibens\apps — npm workspace paths were
+   mismatched. Running "npm run dev:customer" from the repo root fails.
+   Fix: start Vite directly from each app directory:
+     cd C:\gibens\gibens\gibens\apps\customer; npx vite
+     cd C:\gibens\gibens\gibens\apps\pro; npx vite --port 5174
+     cd C:\gibens\gibens\gibens\apps\admin; npx vite --port 5175
+   These commands are now in the Claude tool allowlist
+   (gibens/.claude/settings.local.json).
+
+2. FIXED: UNREAD BADGE NOT CLEARING (TAB BADGE)
+   Root cause #1: markJobNotificationsRead was missing type='new_message'
+     filter and used a fragile JSONB filter on data->>job_id.
+   Root cause #2: Supabase JS v2 query builders are LAZY — the HTTP
+     request only fires when .then() or await is called. All Supabase
+     calls that were fire-and-forget (no .then(), no await) silently
+     never executed.
+   Fix: replaced markJobNotificationsRead with markAllMessageNotifsRead
+     (clears all new_message notifications for the user), added
+     .then(() => {}) to force execution in both Chat.tsx files.
+   Files changed:
+     gibens/packages/supabase/src/queries.ts — added markAllMessageNotifsRead
+     gibens/apps/pro/src/pages/Chat.tsx — use markAllMessageNotifsRead
+     gibens/apps/customer/src/pages/Chat.tsx — use markAllMessageNotifsRead
+   Commits: 016d226, 566aaba
+
+3. FIXED: THREAD-LEVEL UNREAD BADGE (MESSAGE LIST "2" BADGE)
+   Root cause: markMessagesRead (which calls the mark_messages_read RPC)
+     was also fire-and-forget — messages.is_read was never updated in
+     the DB. get_customer_chat_list and get_vendor_chat_list both compute
+     unread_count from messages.is_read = FALSE, so the badge persisted.
+   Fix: added .then(() => {}) to markMessagesRead in both Chat.tsx files.
+   Files changed:
+     gibens/apps/pro/src/pages/Chat.tsx
+     gibens/apps/customer/src/pages/Chat.tsx
+   Commit: 3de8d38
+
+   KEY LESSON: Any Supabase query builder call that is not awaited or
+   .then()'d will silently not execute. Always add .then(() => {}) or
+   await to fire-and-forget Supabase calls.
+
+4. FIXED: PHOTO UPLOAD FAILING
+   Root cause: job-photos storage bucket did not exist in Supabase.
+   Fix steps:
+     a) Created bucket "job-photos" in Supabase Storage UI
+     b) Added storage RLS policies via SQL Editor:
+          CREATE POLICY "Authenticated users can upload job photos"
+          ON storage.objects FOR INSERT TO authenticated
+          WITH CHECK (bucket_id = 'job-photos');
+
+          CREATE POLICY "Public can read job photos"
+          ON storage.objects FOR SELECT TO public
+          USING (bucket_id = 'job-photos');
+     c) Toggled bucket to "Public bucket" in bucket settings
+        (required for getPublicUrl() to serve images without auth)
+   Added try/catch error handling to customer Chat.tsx handlePhoto
+   so failures show in the UI instead of silently doing nothing.
+   Files changed:
+     gibens/apps/customer/src/pages/Chat.tsx — error handling in handlePhoto
+   Commit: cf54b84
+
+   STATUS: Customer can send photos, pro receives them and they display.
+   Photo upload on the PRO side (pro sending to customer) not yet tested.
+
+=======================================================
+STILL TO DO / VERIFY
+=======================================================
+
+  - Test photo sending from the PRO side (pro → customer)
+  - The pro Chat.tsx handlePhoto has NO try/catch either — add same
+    error handling as customer Chat.tsx (cf54b84) to pro Chat.tsx
+  - Verify thread badge clears correctly end-to-end for both sides
+    after the markMessagesRead .then() fix
+  - Consider adding DELETE policy to storage.objects for job-photos
+    so users can delete their own uploads if needed
+
+=======================================================
+MIGRATIONS STATUS
+=======================================================
+
+  001 — initial schema (run earlier)
+  002 — fix RLS (run earlier)
+  003 — fix trigger (run earlier)
+  004 — message notifications (run earlier)
+  005 — job delete policy (run earlier)
+  006 — fix jobs insert policy (run earlier)
+  007 — ensure message notification trigger (run earlier)
+  008 — accept_bid_rpc (run earlier)
+  009 — fix_jobs_select_and_messages (run earlier)
+  010 — fix_messages_rls_direct (run earlier)
+  011 — messages_security_definer (run earlier)
+
+  No new migrations this session — all fixes were code-side.
+  Storage bucket and policies were created manually in Supabase UI/SQL.
+
+=======================================================
+KEY FILES
+=======================================================
+
+  packages/supabase/src/queries.ts — all Supabase query helpers
+    markAllMessageNotifsRead(userId) — clears all new_message notifs
+    markMessagesRead(jobId, userId) — sets messages.is_read = true via RPC
+    uploadJobPhoto(file, jobId) — uploads to job-photos bucket
+  apps/pro/src/pages/Chat.tsx — pro chat page
+  apps/customer/src/pages/Chat.tsx — customer chat page
+  apps/pro/src/pages/Messages.tsx — pro thread list (get_vendor_chat_list RPC)
+  apps/customer/src/pages/Messages.tsx — customer thread list (get_customer_chat_list RPC)
+  apps/pro/src/hooks/useNotifications.ts — tab badge (filters type='new_message')
+  apps/customer/src/hooks/useNotifications.ts — same
+
+=======================================================
+PLATFORM NOTES
+=======================================================
+
+  3 apps: customer (port 5173), pro (port 5174), admin (port 5175)
+  Start servers:
+    cd C:\gibens\gibens\gibens\apps\customer; npx vite
+    cd C:\gibens\gibens\gibens\apps\pro; npx vite --port 5174
+    cd C:\gibens\gibens\gibens\apps\admin; npx vite --port 5175
+  Supabase project: Gibens-Git's Project (main branch, PRODUCTION)
+  Stripe: NOT set up yet — deferred until closer to go-live
+  Storage: job-photos bucket created, public, policies set
+  Vendor GPS location: required at registration, can update in Profile
