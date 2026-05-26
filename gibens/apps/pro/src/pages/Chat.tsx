@@ -30,7 +30,7 @@ export default function Chat() {
         setMessages(data as Message[])
         lastMsgAt.current = data.length > 0 ? data[data.length - 1].created_at : new Date().toISOString()
         markMessagesRead(jobId, user.id)
-        markAllMessageNotifsRead(user.id)
+        markAllMessageNotifsRead(user.id).then(() => {})
       } else {
         lastMsgAt.current = new Date().toISOString()
       }
@@ -53,7 +53,7 @@ export default function Chat() {
             return [...prev, ...fresh]
           })
           markMessagesRead(jobId, user.id)
-          markAllMessageNotifsRead(user.id)
+          markAllMessageNotifsRead(user.id).then(() => {})
         }
       }, 4000)
     })
@@ -67,7 +67,7 @@ export default function Chat() {
         return [...prev, m]
       })
       markMessagesRead(jobId, user.id)
-      markAllMessageNotifsRead(user.id)
+      markAllMessageNotifsRead(user.id).then(() => {})
     })
 
     return () => {
