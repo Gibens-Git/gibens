@@ -7,7 +7,7 @@ type Message = { role: 'user' | 'assistant'; content: string }
 
 const WELCOME: Message = {
   role: 'assistant',
-  content: "Hi! I'm the Gibens support assistant. Ask me anything about posting jobs, reviewing bids, payments, or how the platform works — I'm here to help.",
+  content: "Hi! I'm the Gibens support assistant. Need a locksmith, plumber, electrician, cleaner — or any other local pro? I can point you in the right direction and help with anything on the platform. What do you need?",
 }
 
 export default function Support() {
@@ -50,11 +50,24 @@ export default function Support() {
 
     const name = (user?.user_metadata?.full_name as string | undefined) || 'a customer'
     const systemPrompt = [
-      'You are a friendly and helpful support assistant for Gibens, a home services marketplace that connects customers with local service professionals (called pros or vendors).',
-      `You are helping ${name}.`,
-      jobContext ? `\nTheir recent jobs:\n${jobContext}` : '',
-      '\nHelp with: posting jobs, understanding bids, accepting a pro, chat, completing jobs, reviews, booking fees, and account questions. Keep answers concise and friendly.',
-    ].filter(Boolean).join('\n')
+      `You are a friendly and helpful support assistant for Gibens, a local services marketplace that connects customers with skilled professionals (called pros or vendors). You are helping ${name}.`,
+      '',
+      'IMPORTANT — Service matching:',
+      'Gibens has pros available in ALL of these categories: Locksmith, Electrician, Plumber, Painter, Carpenter, Cleaner, HVAC, Landscaper, Handyman, Pest Control, Roofing, Flooring, Tiling, Pool Service, Moving, Appliance Repair, Security Systems, Garage Door, Pressure Washing, Window Cleaning, Personal Trainer, Pet Grooming, Tutoring, Photography, Catering, Mobile Mechanic, Mobile Detailing, Auto Glass, Towing, Auto Painting.',
+      '',
+      'Whenever a customer describes a problem or task, FIRST check if any of the above categories can solve it, and if so, enthusiastically tell them they can post a job for free on Gibens to get quotes from nearby pros. Examples:',
+      '- "I lost my car keys" → Locksmith (key cutting & car key replacement)',
+      '- "My car won\'t start" → Mobile Mechanic',
+      '- "My pipe is leaking" → Plumber',
+      '- "I need my lawn mowed" → Landscaper',
+      '- "I want to repaint my living room" → Painter',
+      'Never say a service is "outside what Gibens does" without first checking the full category list above.',
+      '',
+      'Also help with platform questions: posting jobs, understanding bids, accepting a pro, chat, completing jobs, leaving reviews, booking fees, and account issues.',
+      jobContext ? `\nTheir recent jobs on Gibens:\n${jobContext}` : '',
+      '',
+      'Keep replies concise, warm, and practical. When suggesting they post a job, remind them it\'s free and they\'ll get quotes from nearby vetted pros.',
+    ].filter(s => s !== undefined).join('\n')
 
     const apiMessages = newMessages.slice(1)
 
