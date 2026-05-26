@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Gibens Brand</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #F2F2EF; min-height: 100vh; padding: 48px 32px; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #bbb; margin-bottom: 40px; }
+    h2 { font-size: 10px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: #aaa; margin-bottom: 16px; margin-top: 40px; }
+    .tile { display: flex; align-items: center; justify-content: center; border-radius: 14px; padding: 36px 44px; }
+    .row  { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+    .colors { display: flex; gap: 14px; flex-wrap: wrap; }
+    .chip { display: flex; flex-direction: column; gap: 6px; }
+    .swatch { width: 72px; height: 72px; border-radius: 12px; }
+    .cn { font-size: 11px; font-weight: 600; color: #555; }
+    .ch { font-size: 11px; color: #aaa; font-family: monospace; }
+    .scale { display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
+    .si { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+    .sl { font-size: 10px; color: #bbb; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Gibens — Brand</h1>
+
+  <h2>Logo</h2>
+  <div class="row">
+
+    <!-- Light bg -->
+    <div class="tile" style="background:#fff; border: 1px solid #e4e4e0; flex:1; min-width:200px">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 212 56" height="52" fill="none">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF6535"/><stop offset="1" stop-color="#D94A06"/>
+          </linearGradient>
+        </defs>
+        <rect width="56" height="56" rx="13" fill="url(#g1)"/>
+        <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+          fill="none" stroke="white" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="70" y="28" dominant-baseline="middle"
+          font-family="'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+          font-size="28" font-weight="800" letter-spacing="-1">
+          <tspan fill="#E8520A">g</tspan><tspan fill="#111">ibens</tspan>
+        </text>
+      </svg>
+    </div>
+
+    <!-- Dark bg -->
+    <div class="tile" style="background:#0D0D0D; flex:1; min-width:200px">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 212 56" height="52" fill="none">
+        <defs>
+          <linearGradient id="g2" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF6535"/><stop offset="1" stop-color="#D94A06"/>
+          </linearGradient>
+        </defs>
+        <rect width="56" height="56" rx="13" fill="url(#g2)"/>
+        <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+          fill="none" stroke="white" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="70" y="28" dominant-baseline="middle"
+          font-family="'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+          font-size="28" font-weight="800" letter-spacing="-1">
+          <tspan fill="#E8520A">g</tspan><tspan fill="#fff">ibens</tspan>
+        </text>
+      </svg>
+    </div>
+
+    <!-- Orange bg -->
+    <div class="tile" style="background:#E8520A; flex:1; min-width:200px">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 212 56" height="52" fill="none">
+        <defs>
+          <linearGradient id="g3" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stop-color="rgba(255,255,255,0.25)"/><stop offset="1" stop-color="rgba(0,0,0,0.1)"/>
+          </linearGradient>
+        </defs>
+        <rect width="56" height="56" rx="13" fill="url(#g3)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+          fill="none" stroke="white" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="70" y="28" dominant-baseline="middle"
+          font-family="'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+          font-size="28" font-weight="800" letter-spacing="-1">
+          <tspan fill="rgba(255,255,255,0.8)">g</tspan><tspan fill="#fff">ibens</tspan>
+        </text>
+      </svg>
+    </div>
+  </div>
+
+  <h2>Icon mark</h2>
+  <div class="tile" style="background:#fff; border:1px solid #e4e4e0; display:inline-flex; padding:28px 32px; margin-bottom:8px">
+    <div class="scale">
+      <!-- 96 -->
+      <div class="si">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="96" height="96" fill="none">
+          <defs><linearGradient id="ic1" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF6535"/><stop offset="1" stop-color="#D94A06"/>
+          </linearGradient></defs>
+          <rect width="56" height="56" rx="13" fill="url(#ic1)"/>
+          <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+            fill="none" stroke="white" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="sl">96px</span>
+      </div>
+      <!-- 56 -->
+      <div class="si">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="56" height="56" fill="none">
+          <defs><linearGradient id="ic2" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF6535"/><stop offset="1" stop-color="#D94A06"/>
+          </linearGradient></defs>
+          <rect width="56" height="56" rx="13" fill="url(#ic2)"/>
+          <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+            fill="none" stroke="white" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="sl">56px</span>
+      </div>
+      <!-- 40 -->
+      <div class="si">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="40" height="40" fill="none">
+          <defs><linearGradient id="ic3" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF6535"/><stop offset="1" stop-color="#D94A06"/>
+          </linearGradient></defs>
+          <rect width="56" height="56" rx="13" fill="url(#ic3)"/>
+          <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+            fill="none" stroke="white" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="sl">40px</span>
+      </div>
+      <!-- 28 -->
+      <div class="si">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="28" height="28" fill="none">
+          <defs><linearGradient id="ic4" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF6535"/><stop offset="1" stop-color="#D94A06"/>
+          </linearGradient></defs>
+          <rect width="56" height="56" rx="13" fill="url(#ic4)"/>
+          <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+            fill="none" stroke="white" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="sl">28px</span>
+      </div>
+      <!-- 20 -->
+      <div class="si">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="20" height="20" fill="none">
+          <defs><linearGradient id="ic5" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF6535"/><stop offset="1" stop-color="#D94A06"/>
+          </linearGradient></defs>
+          <rect width="56" height="56" rx="13" fill="url(#ic5)"/>
+          <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+            fill="none" stroke="white" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="sl">20px</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>Colours</h2>
+  <div class="colors">
+    <div class="chip">
+      <div class="swatch" style="background:linear-gradient(135deg,#FF6535,#D94A06)"></div>
+      <div class="cn">Orange</div><div class="ch">#E8520A</div>
+    </div>
+    <div class="chip">
+      <div class="swatch" style="background:#0D0D0D"></div>
+      <div class="cn">Near-black</div><div class="ch">#0D0D0D</div>
+    </div>
+    <div class="chip">
+      <div class="swatch" style="background:#141414; border:1px solid #2a2a2a"></div>
+      <div class="cn">Surface</div><div class="ch">#141414</div>
+    </div>
+    <div class="chip">
+      <div class="swatch" style="background:#0F4C8A"></div>
+      <div class="cn">Pro Blue</div><div class="ch">#0F4C8A</div>
+    </div>
+    <div class="chip">
+      <div class="swatch" style="background:#fff; border:1px solid #e4e4e0"></div>
+      <div class="cn">White</div><div class="ch">#FFFFFF</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
