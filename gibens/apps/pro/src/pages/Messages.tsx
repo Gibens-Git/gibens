@@ -21,9 +21,11 @@ export default function Messages() {
 
   useEffect(() => {
     if (!user) return
-    supabase.rpc('get_vendor_chat_list', { p_vendor_id: user.id }).then(({ data }) => {
+    supabase.rpc('get_vendor_chat_list', { p_vendor_id: user.id }).then(async ({ data }) => {
       if (!data) return
-      setThreads(data.map((r: Record<string, unknown>) => ({
+
+      // Build threads from RPC (may not include avatar_url)
+      const base: Thread[] = data.map((r: Record<string, unknown>) => ({
         job_id:           r.job_id as string,
         job_title:        r.job_title as string,
         other_name:       (r.other_name as string) || 'Customer',
@@ -31,7 +33,30 @@ export default function Messages() {
         last_message:     (r.last_body as string) || 'Sent a photo',
         last_at:          r.last_at as string,
         unread:           Number(r.unread_count),
-      })))
+      }))
+
+      setThreads(base)
+
+      // If RPC didn't return avatars, fetch them from jobs→users
+      if (base.every(t => t.other_avatar_url === null)) {
+        const jobIds = base.map(t => t.job_id)
+        const { data: jobs } = await supabase
+          .from('jobs')
+          .select('id, customer_id, users!customer_id(avatar_url)')
+          .in('id', jobIds)
+
+        if (jobs?.length) {
+          const avatarMap: Record<string, string | null> = {}
+          jobs.forEach((j: Record<string, unknown>) => {
+            const u = j.users as { avatar_url?: string | null } | null
+            avatarMap[j.id as string] = u?.avatar_url ?? null
+          })
+          setThreads(prev => prev.map(t => ({
+            ...t,
+            other_avatar_url: avatarMap[t.job_id] ?? null,
+          })))
+        }
+      }
     })
   }, [user])
 
