@@ -10,7 +10,9 @@
       "Bash(npx vite *)",
       "Bash(dir C:\\\\gibens\\\\gibens\\\\supabase\\\\migrations)",
       "PowerShell(Start-Process powershell -ArgumentList \"-NoExit\", \"-Command\", \"cd C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\pro; npx vite --port 5174\" -WindowStyle Normal)",
-      "Bash(Get-ChildItem -Directory)"
+      "Bash(Get-ChildItem -Directory)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
