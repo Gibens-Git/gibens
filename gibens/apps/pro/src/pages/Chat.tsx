@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getMessages, sendMessage, markMessagesRead, markJobNotificationsRead, subscribeToMessages, supabase, uploadJobPhoto } from '@gibens/supabase'
+import { getMessages, sendMessage, markMessagesRead, markAllMessageNotifsRead, subscribeToMessages, supabase, uploadJobPhoto } from '@gibens/supabase'
 import { getAvatarColor, getInitials, formatTime } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { Message } from '@gibens/supabase'
@@ -30,7 +30,7 @@ export default function Chat() {
         setMessages(data as Message[])
         lastMsgAt.current = data.length > 0 ? data[data.length - 1].created_at : new Date().toISOString()
         markMessagesRead(jobId, user.id)
-        markJobNotificationsRead(jobId, user.id)
+        markAllMessageNotifsRead(user.id)
       } else {
         lastMsgAt.current = new Date().toISOString()
       }
@@ -53,7 +53,7 @@ export default function Chat() {
             return [...prev, ...fresh]
           })
           markMessagesRead(jobId, user.id)
-          markJobNotificationsRead(jobId, user.id)
+          markAllMessageNotifsRead(user.id)
         }
       }, 4000)
     })
@@ -67,7 +67,7 @@ export default function Chat() {
         return [...prev, m]
       })
       markMessagesRead(jobId, user.id)
-      markJobNotificationsRead(jobId, user.id)
+      markAllMessageNotifsRead(user.id)
     })
 
     return () => {

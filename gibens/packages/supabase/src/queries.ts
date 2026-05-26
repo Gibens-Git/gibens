@@ -233,8 +233,16 @@ export const markJobNotificationsRead = (jobId: string, userId: string) =>
     .from('notifications')
     .update({ is_read: true })
     .eq('user_id', userId)
-    .eq('is_read', false)
+    .eq('type', 'new_message')
     .filter('data->>job_id', 'eq', jobId)
+
+export const markAllMessageNotifsRead = (userId: string) =>
+  supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('user_id', userId)
+    .eq('type', 'new_message')
+    .eq('is_read', false)
 
 export const subscribeToNotifications = (userId: string, callback: (n: unknown) => void) =>
   supabase
