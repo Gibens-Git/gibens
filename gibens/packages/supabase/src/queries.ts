@@ -37,7 +37,7 @@ export const getMe = async () => {
 }
 
 export const upsertUser = (id: string, updates: { full_name?: string; phone?: string; avatar_url?: string }) =>
-  supabase.from('users').upsert({ id, ...updates }).select().single()
+  supabase.from('users').update(updates).eq('id', id).select().single()
 
 // ---- CATEGORIES ----
 
