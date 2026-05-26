@@ -12,7 +12,12 @@
       "PowerShell(Start-Process powershell -ArgumentList \"-NoExit\", \"-Command\", \"cd C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\pro; npx vite --port 5174\" -WindowStyle Normal)",
       "Bash(Get-ChildItem -Directory)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(dir \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\customer\")",
+      "Bash(dir \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\pro\")",
+      "Bash(dir \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\customer\\\\public\")",
+      "Bash(dir \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\pro\\\\public\")",
+      "mcp__Claude_in_Chrome__tabs_context_mcp"
     ]
   }
 }

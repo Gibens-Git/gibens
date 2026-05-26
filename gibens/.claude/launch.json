@@ -22,5 +22,12 @@
       "cwd": "apps/admin",
       "port": 5175
     }
+  ,{
+      "name": "brand",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "5180", "."],
+      "cwd": "brand",
+      "port": 5180
+    }
   ]
 }
