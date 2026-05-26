@@ -10,6 +10,7 @@ import Chat from './pages/Chat'
 import MyJobs from './pages/MyJobs'
 import Profile from './pages/Profile'
 import VendorProfile from './pages/VendorProfile'
+import Support from './pages/Support'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="chat/:jobId" element={<Chat />} />
         <Route path="profile" element={<Profile />} />
         <Route path="vendor/:vendorId" element={<VendorProfile />} />
+        <Route path="support" element={<Support />} />
       </Route>
     </Routes>
   )

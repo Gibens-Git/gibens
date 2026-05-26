@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getVendorBids, createReview, supabase } from '@gibens/supabase'
+import { getVendorBids, createReview, uploadReviewPhoto, supabase } from '@gibens/supabase'
 import { formatRelative, formatCurrency } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { Bid } from '@gibens/supabase'
 
-type ReviewForm = { rating: number; comment: string; submitting: boolean; done: boolean }
+type ReviewForm = { rating: number; comment: string; photos: File[]; submitting: boolean; done: boolean }
 
 export default function MyBids() {
   const nav = useNavigate()
@@ -23,7 +23,7 @@ export default function MyBids() {
   }, [user])
 
   const openForm = (bidId: string) =>
-    setOpenForms(prev => ({ ...prev, [bidId]: { rating: 5, comment: '', submitting: false, done: false } }))
+    setOpenForms(prev => ({ ...prev, [bidId]: { rating: 5, comment: '', photos: [], submitting: false, done: false } }))
 
   const closeForm = (bidId: string) =>
     setOpenForms(prev => { const next = { ...prev }; delete next[bidId]; return next })
@@ -36,12 +36,18 @@ export default function MyBids() {
     const form = openForms[bid.id]
     if (!form) return
     setFormField(bid.id, { submitting: true })
+    const reviewKey = `${bid.job_id}-${user.id}`
+    const uploadedUrls = await Promise.all(
+      form.photos.map(f => uploadReviewPhoto(f, reviewKey).catch(() => null))
+    )
+    const photo_urls = uploadedUrls.filter(Boolean) as string[]
     const { error } = await createReview({
       job_id: bid.job_id,
       reviewer_id: user.id,
       reviewee_id: bid.jobs.customer_id,
       rating: form.rating,
       comment: form.comment.trim() || undefined,
+      photo_urls: photo_urls.length ? photo_urls : undefined,
     })
     if (error) {
       setFormField(bid.id, { submitting: false })
@@ -128,6 +134,30 @@ export default function MyBids() {
                         rows={2}
                         style={{ width: '100%', border: '0.5px solid #ddd', borderRadius: 8, padding: '8px 10px', fontSize: 13, resize: 'none', boxSizing: 'border-box', outline: 'none', marginBottom: 8 }}
                       />
+                      <div style={{ marginBottom: 8 }}>
+                        <p style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>Add project photos (optional)</p>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {form.photos.map((f, i) => (
+                            <div key={i} style={{ position: 'relative' }}>
+                              <img src={URL.createObjectURL(f)} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8 }} />
+                              <button onClick={() => setFormField(bid.id, { photos: form.photos.filter((_, j) => j !== i) })}
+                                style={{ position: 'absolute', top: -6, right: -6, background: '#E24B4A', border: 'none', borderRadius: '50%', width: 18, height: 18, color: '#fff', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                          {form.photos.length < 5 && (
+                            <label style={{ width: 56, height: 56, border: '0.5px dashed #ccc', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#bbb' }}>
+                              <i className="ti ti-camera" style={{ fontSize: 20 }} />
+                              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                                const file = e.target.files?.[0]
+                                if (file) setFormField(bid.id, { photos: [...form.photos, file] })
+                                e.target.value = ''
+                              }} />
+                            </label>
+                          )}
+                        </div>
+                      </div>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button onClick={() => submitReview(bid)} disabled={form.submitting} style={{
                           flex: 2, background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 8, padding: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer',

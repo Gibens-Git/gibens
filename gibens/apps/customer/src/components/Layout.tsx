@@ -12,6 +12,7 @@ export default function Layout() {
     { to: '/',         icon: 'home',           label: 'Home'     },
     { to: '/jobs',     icon: 'clipboard-list',  label: 'My Jobs'  },
     { to: '/messages', icon: 'message-circle',  label: 'Messages', badge: unreadCount },
+    { to: '/support',  icon: 'headset',         label: 'Support'  },
     { to: '/profile',  icon: 'user',            label: 'Profile'  },
   ]
 

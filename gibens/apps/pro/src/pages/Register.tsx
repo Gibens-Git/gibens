@@ -16,7 +16,12 @@ function useGPS() {
     )
   }
 
-  return { status, coords, detect }
+  const setManual = (lat: number, lon: number) => {
+    setCoords({ lat, lon })
+    setStatus('done')
+  }
+
+  return { status, coords, detect, setManual }
 }
 
 export default function Register() {
@@ -25,7 +30,26 @@ export default function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [manualAddress, setManualAddress] = useState('')
+  const [geocoding, setGeocoding] = useState(false)
   const gps = useGPS()
+
+  const geocodeAddress = async () => {
+    if (!manualAddress.trim()) return
+    setGeocoding(true)
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(manualAddress)}&format=json&limit=1`)
+      const data = await res.json()
+      if (data?.[0]) {
+        gps.setManual(parseFloat(data[0].lat), parseFloat(data[0].lon))
+      } else {
+        setError('Address not found — try a more specific address or city.')
+      }
+    } catch {
+      setError('Could not look up address. Check your connection and try again.')
+    }
+    setGeocoding(false)
+  }
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }))
@@ -110,18 +134,39 @@ export default function Register() {
             {gps.status === 'done' ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#EAF3DE', borderRadius: 8, padding: '10px 12px' }}>
                 <i className="ti ti-map-pin" style={{ color: '#3B6D11', fontSize: 16 }} />
-                <span style={{ fontSize: 13, color: '#3B6D11', flex: 1 }}>Location detected</span>
+                <span style={{ fontSize: 13, color: '#3B6D11', flex: 1 }}>Location set</span>
                 <button type="button" onClick={gps.detect}
                   style={{ background: 'none', border: 'none', fontSize: 12, color: '#3B6D11', cursor: 'pointer', textDecoration: 'underline' }}>
                   Re-detect
                 </button>
               </div>
             ) : (
-              <button type="button" onClick={gps.detect} disabled={gps.status === 'loading'}
-                style={{ width: '100%', background: gps.status === 'error' ? '#FEF3C7' : '#f4f4f2', border: gps.status === 'error' ? '0.5px solid #FCD34D' : '0.5px solid #ccc', borderRadius: 10, padding: '10px 14px', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: gps.status === 'error' ? '#92400E' : '#555' }}>
-                <i className={gps.status === 'loading' ? 'ti ti-loader' : 'ti ti-map-pin'} />
-                {gps.status === 'loading' ? 'Detecting...' : gps.status === 'error' ? 'Could not detect — tap to retry' : 'Detect my location'}
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <button type="button" onClick={gps.detect} disabled={gps.status === 'loading'}
+                  style={{ width: '100%', background: '#f4f4f2', border: '0.5px solid #ccc', borderRadius: 10, padding: '10px 14px', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#555' }}>
+                  <i className={gps.status === 'loading' ? 'ti ti-loader' : 'ti ti-map-pin'} />
+                  {gps.status === 'loading' ? 'Detecting...' : 'Use my GPS location'}
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#bbb', fontSize: 12 }}>
+                  <div style={{ flex: 1, height: 1, background: '#eee' }} />
+                  or enter address
+                  <div style={{ flex: 1, height: 1, background: '#eee' }} />
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    value={manualAddress}
+                    onChange={e => setManualAddress(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), geocodeAddress())}
+                    placeholder="e.g. 860 5th Ave, San Diego CA"
+                    style={{ flex: 1, padding: '10px 12px', border: '0.5px solid #ccc', borderRadius: 10, fontSize: 14, outline: 'none' }}
+                  />
+                  <button type="button" onClick={geocodeAddress} disabled={geocoding || !manualAddress.trim()}
+                    style={{ background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 10, padding: '0 14px', fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    {geocoding ? '...' : 'Find'}
+                  </button>
+                </div>
+              </div>
             )}
             <p style={{ fontSize: 12, color: '#aaa', marginTop: 5 }}>Used to match you with nearby job leads</p>
           </div>

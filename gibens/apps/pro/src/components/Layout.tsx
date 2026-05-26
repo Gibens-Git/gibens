@@ -9,9 +9,10 @@ export default function Layout() {
   const nav = useNavigate()
 
   const tabs = [
-    { to: '/',         icon: 'layout-dashboard', label: 'Dashboard' },
-    { to: '/bids',     icon: 'gavel',             label: 'My Bids' },
+    { to: '/',         icon: 'layout-dashboard', label: 'Jobs' },
+    { to: '/bids',     icon: 'gavel',             label: 'Bids' },
     { to: '/messages', icon: 'message-circle',    label: 'Messages', badge: unreadCount },
+    { to: '/support',  icon: 'headset',           label: 'Support' },
     { to: '/earnings', icon: 'chart-bar',         label: 'Earnings' },
     { to: '/profile',  icon: 'user',              label: 'Profile' },
   ]

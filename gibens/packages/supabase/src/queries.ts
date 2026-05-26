@@ -18,6 +18,15 @@ export const signOut = () => supabase.auth.signOut()
 
 export const getSession = () => supabase.auth.getSession()
 
+export const signInWithGoogle = () =>
+  supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
+
+export const signInWithApple = () =>
+  supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: window.location.origin } })
+
+export const signInWithMicrosoft = () =>
+  supabase.auth.signInWithOAuth({ provider: 'azure', options: { redirectTo: window.location.origin, scopes: 'email' } })
+
 // ---- USERS ----
 
 export const getMe = async () => {
@@ -91,12 +100,14 @@ export const getCustomerJobs = (customerId: string) =>
     .eq('customer_id', customerId)
     .order('created_at', { ascending: false })
 
-export const getVendorFeed = () =>
-  supabase
+export const getVendorFeed = (category?: string) => {
+  let q = supabase
     .from('jobs')
     .select('*')
     .in('status', ['open', 'bidding'])
-    .order('created_at', { ascending: false })
+  if (category) q = q.eq('category', category)
+  return q.order('created_at', { ascending: false })
+}
 
 export const getJobDetail = (jobId: string) =>
   supabase
@@ -261,6 +272,15 @@ export const uploadJobPhoto = async (file: File, jobId: string) => {
   return publicUrl
 }
 
+export const uploadReviewPhoto = async (file: File, reviewKey: string) => {
+  const ext = file.name.split('.').pop()
+  const path = `reviews/${reviewKey}/${Date.now()}.${ext}`
+  const { error } = await supabase.storage.from('job-photos').upload(path, file)
+  if (error) throw error
+  const { data: { publicUrl } } = supabase.storage.from('job-photos').getPublicUrl(path)
+  return publicUrl
+}
+
 export const uploadAvatar = async (file: File, userId: string) => {
   const ext = file.name.split('.').pop()
   const path = `${userId}/avatar.${ext}`
@@ -272,7 +292,7 @@ export const uploadAvatar = async (file: File, userId: string) => {
 export const markJobComplete = (jobId: string) =>
   supabase.from('jobs').update({ status: 'completed' }).eq('id', jobId)
 
-export const createReview = (review: { job_id: string; reviewer_id: string; reviewee_id: string; rating: number; comment?: string }) =>
+export const createReview = (review: { job_id: string; reviewer_id: string; reviewee_id: string; rating: number; comment?: string; photo_urls?: string[] }) =>
   supabase.from('reviews').insert(review).select().single()
 
 export const getVendorReviews = (vendorId: string) =>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getJobDetail, getJobBidsDetail, acceptBid, deleteJob, markJobComplete, createReview, getMyReviewForJob } from '@gibens/supabase'
+import { getJobDetail, getJobBidsDetail, acceptBid, deleteJob, markJobComplete, createReview, getMyReviewForJob, uploadReviewPhoto } from '@gibens/supabase'
 import { getAvatarColor, getInitials, formatCurrency, formatRelative, pricingLabels, statusLabels } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { Job, Bid } from '@gibens/supabase'
@@ -19,6 +19,7 @@ export default function JobDetail() {
   const [reviewChecked, setReviewChecked] = useState(false)
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewComment, setReviewComment] = useState('')
+  const [reviewPhotos, setReviewPhotos] = useState<File[]>([])
   const [submittingReview, setSubmittingReview] = useState(false)
   const [reviewDone, setReviewDone] = useState(false)
 
@@ -57,7 +58,9 @@ export default function JobDetail() {
     setAccepting(bid.id)
     const result = await acceptBid(bid.id)
     if (result.success) {
-      nav(`/chat/${jobId}`)
+      setJob(prev => prev ? { ...prev, status: 'accepted' } : prev)
+      setBids(prev => prev.map(b => b.id === bid.id ? { ...b, status: 'accepted' } : { ...b, status: 'declined' }))
+      setAccepting(null)
     } else {
       alert('Error accepting bid: ' + result.error)
       setAccepting(null)
@@ -78,12 +81,18 @@ export default function JobDetail() {
     const acceptedBid = bids.find(b => b.status === 'accepted')
     if (!acceptedBid) return
     setSubmittingReview(true)
+    const reviewKey = `${jobId}-${user.id}`
+    const uploadedUrls = await Promise.all(
+      reviewPhotos.map(f => uploadReviewPhoto(f, reviewKey).catch(() => null))
+    )
+    const photo_urls = uploadedUrls.filter(Boolean) as string[]
     const { error } = await createReview({
       job_id: jobId,
       reviewer_id: user.id,
       reviewee_id: acceptedBid.vendor_id,
       rating: reviewRating,
       comment: reviewComment.trim() || undefined,
+      photo_urls: photo_urls.length ? photo_urls : undefined,
     })
     setSubmittingReview(false)
     if (error) {
@@ -260,6 +269,30 @@ export default function JobDetail() {
                   rows={3}
                   style={{ width: '100%', border: '0.5px solid #ddd', borderRadius: 8, padding: '10px 12px', fontSize: 13, resize: 'none', boxSizing: 'border-box', outline: 'none' }}
                 />
+                <div>
+                  <p style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>Add project photos (optional)</p>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {reviewPhotos.map((f, i) => (
+                      <div key={i} style={{ position: 'relative' }}>
+                        <img src={URL.createObjectURL(f)} alt="" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8 }} />
+                        <button onClick={() => setReviewPhotos(prev => prev.filter((_, j) => j !== i))}
+                          style={{ position: 'absolute', top: -6, right: -6, background: '#E24B4A', border: 'none', borderRadius: '50%', width: 18, height: 18, color: '#fff', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    {reviewPhotos.length < 5 && (
+                      <label style={{ width: 64, height: 64, border: '0.5px dashed #ccc', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#bbb' }}>
+                        <i className="ti ti-camera" style={{ fontSize: 22 }} />
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                          const file = e.target.files?.[0]
+                          if (file) setReviewPhotos(prev => [...prev, file])
+                          e.target.value = ''
+                        }} />
+                      </label>
+                    )}
+                  </div>
+                </div>
                 <button onClick={handleReview} disabled={submittingReview} style={{
                   marginTop: 10, width: '100%', background: '#E8520A', color: '#fff', border: 'none',
                   borderRadius: 8, padding: '10px 0', fontSize: 14, fontWeight: 500, cursor: 'pointer',

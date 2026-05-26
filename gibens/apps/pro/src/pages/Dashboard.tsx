@@ -18,26 +18,27 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return
 
-    // Load vendor profile — auto-create if missing
+    // Load vendor profile — then load feed filtered to their category
     supabase.from('vendor_profiles').select('is_available, avg_rating, category, status').eq('user_id', user.id).single()
       .then(async ({ data, error }) => {
         if (data) {
           setAvailable(data.is_available)
+          getVendorFeed(data.category ?? undefined).then(({ data: feedData, error: feedErr }) => {
+            if (feedErr) console.error('[Dashboard] feed error:', feedErr)
+            setJobs(feedData || [])
+            setEarnings(e => ({ ...e, newJobs: feedData?.length || 0 }))
+          })
         } else if (error?.code === 'PGRST116' || !data) {
           setProfileMissing(true)
+          getVendorFeed().then(({ data: feedData }) => {
+            setJobs(feedData || [])
+          })
         }
       })
 
     // Load jobs the vendor has already bid on
     getVendorBids(user.id).then(({ data }) => {
       if (data) setBidJobIds(new Set(data.map(b => b.job_id)))
-    })
-
-    // Load job feed (RLS filters to vendor's category)
-    getVendorFeed().then(({ data, error }) => {
-      if (error) console.error('[Dashboard] feed error:', error)
-      setJobs(data || [])
-      setEarnings(e => ({ ...e, newJobs: data?.length || 0 }))
     })
 
     // Load earnings

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { signIn } from '@gibens/supabase'
+import { signIn, signInWithGoogle, signInWithApple, signInWithMicrosoft } from '@gibens/supabase'
 
 export default function Login() {
   const nav = useNavigate()
@@ -44,6 +44,27 @@ export default function Login() {
           {loading ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 4px' }}>
+        <div style={{ flex: 1, height: 1, background: '#eee' }} />
+        <span style={{ fontSize: 12, color: '#bbb' }}>or continue with</span>
+        <div style={{ flex: 1, height: 1, background: '#eee' }} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {[
+          { label: 'Google', icon: 'brand-google', action: signInWithGoogle },
+          { label: 'Apple', icon: 'brand-apple', action: signInWithApple },
+          { label: 'Microsoft', icon: 'brand-windows', action: signInWithMicrosoft },
+        ].map(p => (
+          <button key={p.label} onClick={p.action} type="button" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            border: '0.5px solid #ddd', borderRadius: 10, padding: '11px 14px',
+            background: '#fff', fontSize: 14, cursor: 'pointer', color: '#333', fontWeight: 500,
+          }}>
+            <i className={`ti ti-${p.icon}`} style={{ fontSize: 18 }} />
+            Continue with {p.label}
+          </button>
+        ))}
+      </div>
       <p style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: '#888' }}>
         New to Gibens? <Link to="/register" style={{ color: '#E8520A', fontWeight: 500 }}>Create account</Link>
       </p>

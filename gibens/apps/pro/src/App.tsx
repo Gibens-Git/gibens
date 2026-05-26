@@ -9,6 +9,7 @@ import Messages from './pages/Messages'
 import Chat from './pages/Chat'
 import Earnings from './pages/Earnings'
 import ProProfile from './pages/ProProfile'
+import Support from './pages/Support'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="chat/:jobId" element={<Chat />} />
         <Route path="earnings" element={<Earnings />} />
         <Route path="profile" element={<ProProfile />} />
+        <Route path="support" element={<Support />} />
       </Route>
     </Routes>
   )
