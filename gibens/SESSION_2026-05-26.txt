@@ -1,0 +1,102 @@
+SESSION SUMMARY — 2026-05-26
+============================
+
+BUGS FIXED
+----------
+1. Avatar not persisting after refresh
+   - Root cause: upsertUser() used Supabase .upsert() which tries an INSERT
+     first. Since full_name/role are NOT NULL, the insert failed silently
+     and avatar_url was never saved to the DB.
+   - Fix: changed .upsert() to .update().eq('id', id) in packages/supabase/src/queries.ts
+   - File: packages/supabase/src/queries.ts
+
+2. Customer profile pictures not showing in pro app Messages list
+   - Root cause: get_vendor_chat_list RPC does not return other_avatar_url.
+   - Fix: after loading threads, do a follow-up query to jobs→users to
+     batch-fetch customer avatars and patch the thread list.
+   - File: apps/pro/src/pages/Messages.tsx
+
+3. AI support assistant not referring customers to relevant service categories
+   - Root cause: system prompt described Gibens as "home services only" with
+     no category list, so the AI said car keys were "out of scope" instead of
+     directing the user to the Locksmith category.
+   - Fix: rewrote system prompt to include all 30 categories with examples
+     (e.g. lost car keys → Locksmith), added rule to always check category
+     list before declining. Updated welcome message to signal broader scope.
+   - File: apps/customer/src/pages/Support.tsx
+
+
+BRAND / LOGO
+------------
+4. Created Gibens SVG logo (brand-new, from scratch)
+   - icon.svg         — 56×56 orange gradient rounded square + white G mark
+   - logo.svg         — icon + wordmark (dark text, for light backgrounds)
+   - logo-dark.svg    — icon + wordmark (white text, for dark backgrounds)
+   - brand/index.html — brand preview sheet (inline SVGs, loads at localhost:5180)
+   - brand/preview.html — original version (kept for reference)
+   - All files also copied to apps/customer/public/ and apps/pro/public/
+   - G mark path: M11.3,-11.3 A16,16 0 1,0 16,0 L4,0  (stroke-based, rounded caps)
+   - Brand colours: #E8520A orange, #0D0D0D near-black, #141414 surface, #0F4C8A pro-blue
+
+5. Logo rolled out across all screens
+   - Customer Home page header (was plain "Gibens." text)
+   - Customer Login page
+   - Customer Register page (both states: main form + email-sent confirmation)
+   - Pro Dashboard header (compact 28px version with "Pro" pill badge)
+   - Pro Login page (with "Pro" pill badge)
+   - Pro Register page (with "Pro" pill badge)
+   - Favicon added to both apps (link rel="icon" type="image/svg+xml" href="/icon.svg")
+   - Pro app browser tab title changed to "Gibens Pro"
+
+   Pro logo includes a frosted-glass "Pro" pill badge:
+     <rect x="172" y="16" width="46" height="24" rx="12" fill="rgba(255,255,255,0.2)"/>
+
+
+COMMITS (in order)
+------------------
+d305d71  Show customer profile photos in pro app chat and messages  (prev session)
+6d65848  Fix customer avatars not loading in pro Messages thread list
+9fd2c10  Fix avatar not persisting after refresh
+ac37289  Add Gibens brand assets (logo + icon SVGs)
+c19fa81  Update allowed shell commands in settings.local.json
+0bf7fcc  Add brand index.html with inline SVGs for reliable rendering
+4e40f60  Replace text wordmark with SVG logo in customer app header
+8d3eacf  Replace text wordmarks with SVG logo across all screens
+4a49f06  Fix AI support assistant not matching customer needs to service categories
+
+
+KEY FILES CHANGED THIS SESSION
+--------------------------------
+packages/supabase/src/queries.ts          — upsertUser fix (update not upsert)
+apps/pro/src/pages/Messages.tsx           — customer avatar follow-up fetch
+apps/customer/src/pages/Support.tsx       — AI system prompt rewrite
+apps/customer/src/pages/Home.tsx          — logo in header
+apps/customer/src/pages/Login.tsx         — logo on login screen
+apps/customer/src/pages/Register.tsx      — logo on register screen
+apps/pro/src/pages/Dashboard.tsx          — logo in dashboard header
+apps/pro/src/pages/Login.tsx              — logo on pro login screen
+apps/pro/src/pages/Register.tsx           — logo on pro register screen
+apps/customer/index.html                  — favicon
+apps/pro/index.html                       — favicon + title
+brand/icon.svg                            — master icon file
+brand/logo.svg                            — master logo (light)
+brand/logo-dark.svg                       — master logo (dark)
+brand/index.html                          — brand preview page
+brand/preview.html                        — brand preview (original)
+
+
+SERVERS (dev)
+-------------
+Customer app:  http://localhost:5173  (npm run dev in apps/customer)
+Pro app:       http://localhost:5174  (npm run dev in apps/pro)
+Admin app:     http://localhost:5175  (npm run dev in apps/admin)
+Brand preview: http://localhost:5180  (npx serve in brand/)
+
+
+PENDING / POSSIBLE NEXT STEPS
+-------------------------------
+- Verify avatar upload now persists correctly after refresh (core fix this session)
+- Add logo to the admin app if needed
+- Consider adding the logo to app/customer and app/pro splash/loading screens
+- The pro app Support.tsx has a similar AI prompt — may want the same category-aware fix
+- Could add a "Post a job in [category]" deep-link button in the support chat responses
