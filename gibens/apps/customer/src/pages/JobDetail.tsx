@@ -201,6 +201,10 @@ export default function JobDetail() {
                       {bid.users?.vendor_profiles?.is_licensed && <span style={{ fontSize: 11, background: '#EAF3DE', color: '#3B6D11', padding: '1px 6px', borderRadius: 20 }}>Licensed</span>}
                       {bid.users?.vendor_profiles?.is_insured && <span style={{ fontSize: 11, background: '#EAF3DE', color: '#3B6D11', padding: '1px 6px', borderRadius: 20 }}>Insured</span>}
                     </div>
+                    <button onClick={() => nav(`/vendor/${bid.vendor_id}`)}
+                      style={{ background: 'none', border: 'none', padding: 0, marginTop: 4, fontSize: 12, color: '#E8520A', cursor: 'pointer', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <i className="ti ti-user" style={{ fontSize: 12 }} /> View profile
+                    </button>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
