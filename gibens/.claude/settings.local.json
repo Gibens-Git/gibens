@@ -8,7 +8,8 @@
       "PowerShell(netstat -ano)",
       "Bash(grep -n \"mark_messages_read\\\\|markMessagesRead\\\\|is_read\\\\|unread\" \"C:\\\\gibens\\\\gibens\\\\supabase\\\\migrations\\\\001_initial_schema.sql\" 2>&1)",
       "Bash(npx vite *)",
-      "Bash(dir C:\\\\gibens\\\\gibens\\\\supabase\\\\migrations)"
+      "Bash(dir C:\\\\gibens\\\\gibens\\\\supabase\\\\migrations)",
+      "PowerShell(Start-Process powershell -ArgumentList \"-NoExit\", \"-Command\", \"cd C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\pro; npx vite --port 5174\" -WindowStyle Normal)"
     ]
   }
 }
