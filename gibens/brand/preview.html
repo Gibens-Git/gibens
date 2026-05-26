@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gibens Brand</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #F5F5F3; }
+
+    h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #999; margin-bottom: 20px; }
+
+    .page { max-width: 760px; margin: 0 auto; padding: 48px 32px; }
+    .page > h1 { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #bbb; margin-bottom: 48px; }
+
+    .row { display: flex; align-items: center; gap: 40px; flex-wrap: wrap; margin-bottom: 48px; }
+
+    .swatch {
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 16px; padding: 32px 40px;
+    }
+    .swatch.light { background: #fff; border: 1px solid #e8e8e8; }
+    .swatch.dark  { background: #0D0D0D; }
+    .swatch.orange { background: #E8520A; }
+
+    .scale-row { display: flex; align-items: flex-end; gap: 32px; flex-wrap: wrap; margin-bottom: 48px; }
+    .scale-item { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .scale-label { font-size: 11px; color: #aaa; }
+
+    .colors { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; }
+    .color-chip { display: flex; flex-direction: column; gap: 8px; }
+    .color-swatch { width: 80px; height: 80px; border-radius: 12px; }
+    .color-name  { font-size: 11px; font-weight: 600; color: #555; }
+    .color-hex   { font-size: 11px; color: #aaa; font-family: monospace; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <h1>Gibens — Brand Assets</h1>
+
+  <h2>Logo — Light</h2>
+  <div class="row">
+    <div class="swatch light"><img src="logo.svg" height="56"/></div>
+    <div class="swatch dark"><img src="logo-dark.svg" height="56"/></div>
+    <div class="swatch orange"><img src="logo-dark.svg" height="56"/></div>
+  </div>
+
+  <h2>Icon mark</h2>
+  <div class="scale-row">
+    <div class="scale-item">
+      <img src="icon.svg" width="96" height="96"/>
+      <span class="scale-label">96 × 96</span>
+    </div>
+    <div class="scale-item">
+      <img src="icon.svg" width="56" height="56"/>
+      <span class="scale-label">56 × 56</span>
+    </div>
+    <div class="scale-item">
+      <img src="icon.svg" width="40" height="40"/>
+      <span class="scale-label">40 × 40</span>
+    </div>
+    <div class="scale-item">
+      <img src="icon.svg" width="28" height="28"/>
+      <span class="scale-label">28 × 28</span>
+    </div>
+    <div class="scale-item">
+      <img src="icon.svg" width="20" height="20"/>
+      <span class="scale-label">20 × 20</span>
+    </div>
+  </div>
+
+  <h2>Logo sizes</h2>
+  <div class="scale-row" style="background:#fff; border-radius:16px; padding:28px 32px; border:1px solid #e8e8e8;">
+    <div class="scale-item">
+      <img src="logo.svg" height="56"/>
+      <span class="scale-label">full size</span>
+    </div>
+    <div class="scale-item">
+      <img src="logo.svg" height="40"/>
+      <span class="scale-label">40 h</span>
+    </div>
+    <div class="scale-item">
+      <img src="logo.svg" height="28"/>
+      <span class="scale-label">28 h</span>
+    </div>
+  </div>
+
+  <h2>Brand colours</h2>
+  <div class="colors">
+    <div class="color-chip">
+      <div class="color-swatch" style="background:linear-gradient(135deg,#FF6535,#D94A06)"></div>
+      <div class="color-name">Orange</div>
+      <div class="color-hex">#E8520A</div>
+    </div>
+    <div class="color-chip">
+      <div class="color-swatch" style="background:#0D0D0D"></div>
+      <div class="color-name">Near-black</div>
+      <div class="color-hex">#0D0D0D</div>
+    </div>
+    <div class="color-chip">
+      <div class="color-swatch" style="background:#141414; border:1px solid #2a2a2a"></div>
+      <div class="color-name">Surface</div>
+      <div class="color-hex">#141414</div>
+    </div>
+    <div class="color-chip">
+      <div class="color-swatch" style="background:#0F4C8A"></div>
+      <div class="color-name">Pro Blue</div>
+      <div class="color-hex">#0F4C8A</div>
+    </div>
+    <div class="color-chip">
+      <div class="color-swatch" style="background:#ffffff; border:1px solid #e8e8e8"></div>
+      <div class="color-name">White</div>
+      <div class="color-hex">#FFFFFF</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
