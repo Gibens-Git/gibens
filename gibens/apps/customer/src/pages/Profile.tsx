@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { signOut, getCustomerReviews } from '@gibens/supabase'
+import { signOut, getCustomerReviews, uploadAvatar, upsertUser } from '@gibens/supabase'
 import { getAvatarColor, getInitials, formatRelative } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { ReviewWithUser } from '@gibens/supabase'
@@ -9,11 +9,28 @@ export default function Profile() {
   const nav = useNavigate()
   const { user } = useAuth()
   const [reviews, setReviews] = useState<ReviewWithUser[]>([])
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   useEffect(() => {
     if (!user) return
+    setAvatarUrl(user.avatar_url ?? null)
     getCustomerReviews(user.id).then(({ data }) => setReviews((data as ReviewWithUser[]) || []))
   }, [user])
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    setUploadingAvatar(true)
+    try {
+      const url = await uploadAvatar(file, user.id)
+      await upsertUser(user.id, { avatar_url: url })
+      setAvatarUrl(url + '?t=' + Date.now())
+    } catch (err) {
+      console.error('Avatar upload failed:', err)
+    }
+    setUploadingAvatar(false)
+  }
 
   const handleLogout = async () => {
     await signOut()
@@ -35,11 +52,24 @@ export default function Profile() {
     <div style={{ background: '#0D0D0D', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ padding: '32px 20px 24px', textAlign: 'center', borderBottom: '0.5px solid rgba(255,255,255,0.07)', background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232,82,10,0.12) 0%, transparent 70%), #141414' }}>
-        <div style={{ width: 72, height: 72, borderRadius: '50%', background: bg, color: tc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 24, margin: '0 auto 12px', border: '2px solid rgba(232,82,10,0.3)', boxShadow: '0 0 20px rgba(232,82,10,0.2)' }}>
-          {getInitials(user.full_name)}
-        </div>
+        {/* Avatar */}
+        <label style={{ cursor: 'pointer', position: 'relative', display: 'inline-block', margin: '0 auto 12px' }}>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={user.full_name} style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(232,82,10,0.35)', boxShadow: '0 0 20px rgba(232,82,10,0.2)', display: 'block' }} />
+          ) : (
+            <div style={{ width: 72, height: 72, borderRadius: '50%', background: bg, color: tc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 24, border: '2px solid rgba(232,82,10,0.35)', boxShadow: '0 0 20px rgba(232,82,10,0.2)' }}>
+              {getInitials(user.full_name)}
+            </div>
+          )}
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderRadius: '50%', background: '#E8520A', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #141414', boxShadow: '0 0 8px rgba(232,82,10,0.5)' }}>
+            <i className={`ti ti-${uploadingAvatar ? 'loader-2' : 'camera'}`} style={{ fontSize: 11, color: '#fff' }} />
+          </div>
+          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} disabled={uploadingAvatar} />
+        </label>
+
         <h1 style={{ fontSize: 18, fontWeight: 600, color: '#fff' }}>{user.full_name}</h1>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>Customer account</p>
+        {uploadingAvatar && <p style={{ fontSize: 12, color: '#E8520A', marginTop: 6 }}>Uploading photo...</p>}
       </div>
 
       <div style={{ padding: '8px 20px' }}>

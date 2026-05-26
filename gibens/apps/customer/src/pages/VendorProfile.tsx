@@ -33,9 +33,13 @@ export default function VendorProfile() {
         {/* Vendor header */}
         <div style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 18, marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: bg, color: tc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 22, border: '2px solid rgba(232,82,10,0.25)', flexShrink: 0 }}>
-              {getInitials(vendor.users?.full_name || '?')}
-            </div>
+            {vendor.users?.avatar_url ? (
+              <img src={vendor.users.avatar_url} alt={vendor.users?.full_name || ''} style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(232,82,10,0.25)', flexShrink: 0, display: 'block' }} />
+            ) : (
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: bg, color: tc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 22, border: '2px solid rgba(232,82,10,0.25)', flexShrink: 0 }}>
+                {getInitials(vendor.users?.full_name || '?')}
+              </div>
+            )}
             <div>
               <h1 style={{ fontSize: 18, fontWeight: 600, color: '#fff' }}>{vendor.users?.full_name}</h1>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>

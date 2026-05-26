@@ -191,9 +191,13 @@ export default function JobDetail() {
             <div key={bid.id} style={{ background: 'rgba(255,255,255,0.04)', border: `0.5px solid ${bidAccepted ? 'rgba(232,82,10,0.35)' : bidDeclined ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 12, padding: 14, marginBottom: 12, opacity: bidDeclined ? 0.5 : 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg, color: tc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 500, fontSize: 13, flexShrink: 0 }}>
-                    {getInitials(bid.users?.full_name || '?')}
-                  </div>
+                  {bid.users?.avatar_url ? (
+                    <img src={bid.users.avatar_url} alt={bid.users?.full_name || ''} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, display: 'block' }} />
+                  ) : (
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg, color: tc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 500, fontSize: 13, flexShrink: 0 }}>
+                      {getInitials(bid.users?.full_name || '?')}
+                    </div>
+                  )}
                   <div>
                     <p style={{ fontWeight: 500, fontSize: 14, color: '#fff' }}>{bid.users?.full_name}</p>
                     <div style={{ display: 'flex', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>

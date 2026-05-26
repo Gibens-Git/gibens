@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { signOut, getVendorProfile, updateVendorProfile, getVendorReviews, supabase } from '@gibens/supabase'
+import { signOut, getVendorProfile, updateVendorProfile, getVendorReviews, uploadAvatar, upsertUser, supabase } from '@gibens/supabase'
 import { getAvatarColor, getInitials, formatRelative, CATEGORIES } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { ReviewWithUser } from '@gibens/supabase'
@@ -34,11 +34,14 @@ export default function ProProfile() {
   const [updatingLoc, setUpdatingLoc] = useState(false)
   const [locUpdated, setLocUpdated] = useState(false)
   const [reviews, setReviews] = useState<ReviewWithUser[]>([])
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const createGPS = useGPS()
   const updateGPS = useGPS()
 
   useEffect(() => {
     if (!user) return
+    setAvatarUrl(user.avatar_url ?? null)
     getVendorProfile(user.id).then(({ data, error }) => {
       if (data) {
         setVendor(data as Record<string, unknown>)
@@ -49,6 +52,20 @@ export default function ProProfile() {
     })
     getVendorReviews(user.id).then(({ data }) => setReviews((data as ReviewWithUser[]) || []))
   }, [user])
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    setUploadingAvatar(true)
+    try {
+      const url = await uploadAvatar(file, user.id)
+      await upsertUser(user.id, { avatar_url: url })
+      setAvatarUrl(url + '?t=' + Date.now())
+    } catch (err) {
+      console.error('Avatar upload failed:', err)
+    }
+    setUploadingAvatar(false)
+  }
 
   const createProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -140,11 +157,24 @@ export default function ProProfile() {
   return (
     <div>
       <div style={{ padding: '24px 20px 20px', textAlign: 'center', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fff' }}>
-        <div style={{ width: 72, height: 72, borderRadius: '50%', background: bg, color: tc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 500, fontSize: 24, margin: '0 auto 12px' }}>
-          {getInitials(user.full_name)}
-        </div>
+        {/* Avatar with upload */}
+        <label style={{ cursor: 'pointer', position: 'relative', display: 'inline-block', margin: '0 auto 12px' }}>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={user.full_name} style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '2px solid #0F4C8A', display: 'block' }} />
+          ) : (
+            <div style={{ width: 72, height: 72, borderRadius: '50%', background: bg, color: tc, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 500, fontSize: 24 }}>
+              {getInitials(user.full_name)}
+            </div>
+          )}
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderRadius: '50%', background: '#0F4C8A', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff' }}>
+            <i className={`ti ti-${uploadingAvatar ? 'loader-2' : 'camera'}`} style={{ fontSize: 11, color: '#fff' }} />
+          </div>
+          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} disabled={uploadingAvatar} />
+        </label>
+
         <h1 style={{ fontSize: 18, fontWeight: 500 }}>{user.full_name}</h1>
         <p style={{ fontSize: 14, color: '#888', marginTop: 3 }}>{cat?.name || 'Vendor'}</p>
+        {uploadingAvatar && <p style={{ fontSize: 12, color: '#0F4C8A', marginTop: 6 }}>Uploading photo...</p>}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
           {vendor?.is_licensed && <span style={{ fontSize: 12, background: '#EAF3DE', color: '#3B6D11', padding: '3px 10px', borderRadius: 20 }}>Licensed</span>}
           {vendor?.is_insured && <span style={{ fontSize: 12, background: '#EAF3DE', color: '#3B6D11', padding: '3px 10px', borderRadius: 20 }}>Insured</span>}
@@ -165,7 +195,6 @@ export default function ProProfile() {
             </button>
           </div>
 
-          {/* Location update */}
           <div style={{ padding: '12px 14px', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
             <p style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>Service location</p>
             {locUpdated ? (
