@@ -39,7 +39,21 @@ export default function Home() {
         borderBottom: '0.5px solid rgba(255,255,255,0.07)',
       }}>
         <div className="page-wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px' }}>
-          <span style={{ fontSize: 24, fontWeight: 700, color: '#E8520A', letterSpacing: '-0.3px', textShadow: '0 0 20px rgba(232,82,10,0.4)' }}>Gibens.</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 212 56" height="32" fill="none">
+            <defs>
+              <linearGradient id="logo-bg" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#FF6535"/><stop offset="1" stopColor="#D94A06"/>
+              </linearGradient>
+            </defs>
+            <rect width="56" height="56" rx="13" fill="url(#logo-bg)"/>
+            <path transform="translate(28,28)" d="M11.3,-11.3 A16,16 0 1,0 16,0 L4,0"
+              fill="none" stroke="white" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <text x="70" y="28" dominantBaseline="middle"
+              fontFamily="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+              fontSize="28" fontWeight="800" letterSpacing="-1">
+              <tspan fill="#E8520A">g</tspan><tspan fill="#ffffff">ibens</tspan>
+            </text>
+          </svg>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => nav('/messages')} style={{
               background: 'rgba(255,255,255,0.07)', border: '0.5px solid rgba(255,255,255,0.1)',
