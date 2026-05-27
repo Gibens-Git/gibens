@@ -6,6 +6,7 @@ const navItems = [
   { to: '/',          icon: 'layout-dashboard', label: 'Dashboard',  exact: true },
   { to: '/customers', icon: 'users',            label: 'Customers' },
   { to: '/vendors',   icon: 'briefcase',        label: 'Vendors' },
+  { to: '/credentials', icon: 'license',         label: 'Credentials' },
   { to: '/jobs',      icon: 'clipboard-list',   label: 'Jobs' },
   { to: '/disputes',  icon: 'alert-triangle',   label: 'Disputes',  badge: '4' },
   { to: '/pricing',   icon: 'currency-dollar',  label: 'Lead pricing' },

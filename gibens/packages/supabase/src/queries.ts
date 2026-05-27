@@ -357,6 +357,19 @@ export const adminUpdateLeadFee = (id: number, fee: number) =>
 export const adminUpdateVendorStatus = (userId: string, status: string) =>
   supabase.from('vendor_profiles').update({ status }).eq('user_id', userId)
 
+export const adminGetVendorCredentials = () =>
+  supabase
+    .from('vendor_profiles')
+    .select('*, users(full_name, phone)')
+    .eq('credentials_submitted', true)
+    .order('updated_at', { ascending: true })
+
+export const adminApproveCredentials = (userId: string, isLicensed: boolean, isInsured: boolean) =>
+  supabase.from('vendor_profiles').update({ is_licensed: isLicensed, is_insured: isInsured }).eq('user_id', userId)
+
+export const adminSaveAIReview = (userId: string, status: string, result: Record<string, unknown>) =>
+  supabase.from('vendor_profiles').update({ ai_review_status: status, ai_review_result: result }).eq('user_id', userId)
+
 export const adminUpdateUserStatus = (userId: string, isActive: boolean) =>
   supabase.from('users').update({ is_active: isActive }).eq('id', userId)
 

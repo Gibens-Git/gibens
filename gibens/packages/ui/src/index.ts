@@ -1,4 +1,5 @@
 // Shared UI components and utilities
+export * from './credentialRequirements'
 
 export const CATEGORIES = [
   { name: 'Locksmith', slug: 'locksmith', icon: 'lock' },

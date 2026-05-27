@@ -36,7 +36,9 @@
       "Bash(Get-ChildItem \"C:\\\\gibens\\\\gibens\\\\gibens\\\\supabase\\\\migrations\")",
       "Bash(Sort-Object Name)",
       "Bash(Select-Object Name)",
-      "Bash(git -C \"C:\\\\gibens\\\\gibens\" add -A)"
+      "Bash(git -C \"C:\\\\gibens\\\\gibens\" add -A)",
+      "Bash(Get-Content \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\pro\\\\.env\")",
+      "Bash(Get-Content \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\customer\\\\.env\")"
     ]
   }
 }

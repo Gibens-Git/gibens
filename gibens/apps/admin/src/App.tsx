@@ -10,6 +10,7 @@ import Disputes from './pages/Disputes'
 import Categories from './pages/Categories'
 import LeadPricing from './pages/LeadPricing'
 import Settings from './pages/Settings'
+import CredentialReview from './pages/CredentialReview'
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="categories" element={<Categories />} />
         <Route path="pricing" element={<LeadPricing />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="credentials" element={<CredentialReview />} />
       </Route>
     </Routes>
   )
