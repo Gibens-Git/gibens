@@ -38,7 +38,9 @@
       "Bash(Select-Object Name)",
       "Bash(git -C \"C:\\\\gibens\\\\gibens\" add -A)",
       "Bash(Get-Content \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\pro\\\\.env\")",
-      "Bash(Get-Content \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\customer\\\\.env\")"
+      "Bash(Get-Content \"C:\\\\gibens\\\\gibens\\\\gibens\\\\apps\\\\customer\\\\.env\")",
+      "PowerShell(netstat -ano | Select-String \":517[0-9]\" | ForEach-Object { $_ -replace '\\\\s+', ' ' })",
+      "PowerShell(foreach \\($pid in 12892, 16852, 17284, 2756, 14196\\) { $p = Get-WmiObject Win32_Process -Filter \"ProcessId = $pid\"; \"PID $pid`: $\\($p.CommandLine\\)\" })"
     ]
   }
 }
