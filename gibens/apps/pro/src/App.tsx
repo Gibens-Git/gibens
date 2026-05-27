@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Credentials from './pages/Credentials'
 import SubmitBid from './pages/SubmitBid'
 import MyBids from './pages/MyBids'
 import Messages from './pages/Messages'
@@ -25,6 +26,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/credentials" element={<PrivateRoute><Credentials /></PrivateRoute>} />
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="bid/:jobId" element={<SubmitBid />} />

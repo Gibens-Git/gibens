@@ -219,9 +219,8 @@ export default function ProProfile() {
           </div>
 
           {[
-            { icon: 'credit-card', label: 'Payout method' },
-            { icon: 'shield', label: 'Verification documents' },
-            { icon: 'bell', label: 'Notifications' },
+            { icon: 'credit-card', label: 'Payout method', action: undefined },
+            { icon: 'bell', label: 'Notifications', action: undefined },
           ].map(r => (
             <div key={r.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
@@ -231,6 +230,22 @@ export default function ProProfile() {
               <i className="ti ti-chevron-right" style={{ color: '#ccc', fontSize: 16 }} />
             </div>
           ))}
+          <div
+            onClick={() => nav('/credentials')}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px', borderBottom: '0.5px solid rgba(0,0,0,0.07)', cursor: 'pointer' }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
+              <i className="ti ti-license" style={{ color: '#0F4C8A', fontSize: 18 }} />
+              License &amp; insurance
+              {!vendor?.credentials_submitted && (
+                <span style={{ fontSize: 10, background: '#FEF3C7', color: '#92400E', padding: '2px 8px', borderRadius: 20, fontWeight: 500 }}>Required</span>
+              )}
+              {vendor?.credentials_submitted && (
+                <span style={{ fontSize: 10, background: '#EAF3DE', color: '#3B6D11', padding: '2px 8px', borderRadius: 20 }}>On file</span>
+              )}
+            </span>
+            <i className="ti ti-chevron-right" style={{ color: '#ccc', fontSize: 16 }} />
+          </div>
         </div>
 
         <p style={{ fontSize: 15, fontWeight: 500, marginBottom: 12 }}>

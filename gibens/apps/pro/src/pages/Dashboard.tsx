@@ -13,16 +13,18 @@ export default function Dashboard() {
   const [earnings, setEarnings] = useState({ week: 0, rating: 0, newJobs: 0 })
 
   const [profileMissing, setProfileMissing] = useState(false)
+  const [credentialsMissing, setCredentialsMissing] = useState(false)
   const [bidJobIds, setBidJobIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!user) return
 
     // Load vendor profile — then load feed filtered to their category
-    supabase.from('vendor_profiles').select('is_available, avg_rating, category, status').eq('user_id', user.id).single()
+    supabase.from('vendor_profiles').select('is_available, avg_rating, category, status, credentials_submitted').eq('user_id', user.id).single()
       .then(async ({ data, error }) => {
         if (data) {
           setAvailable(data.is_available)
+          if (!data.credentials_submitted) setCredentialsMissing(true)
           getVendorFeed(data.category ?? undefined).then(({ data: feedData, error: feedErr }) => {
             if (feedErr) console.error('[Dashboard] feed error:', feedErr)
             setJobs(feedData || [])
@@ -128,6 +130,20 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      {/* Credentials missing banner */}
+      {credentialsMissing && (
+        <div style={{ margin: '14px 20px 0', background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 10, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <i className="ti ti-license" style={{ color: '#D97706', fontSize: 18, flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 500, color: '#92400E' }}>Credentials required</p>
+            <p style={{ fontSize: 12, color: '#B45309', marginTop: 2 }}>Submit your license and insurance to start receiving job leads.</p>
+            <button onClick={() => nav('/credentials')} style={{ marginTop: 8, background: '#D97706', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, cursor: 'pointer' }}>
+              Add credentials
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Profile missing banner */}
       {profileMissing && (

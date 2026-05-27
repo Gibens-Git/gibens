@@ -32,7 +32,11 @@
       "Bash(git -C \"C:\\\\gibens\\\\gibens\" status)",
       "Bash(git -C \"C:\\\\gibens\\\\gibens\" diff)",
       "Bash(git -C \"C:\\\\gibens\\\\gibens\" add start-dev.bat gibens/.claude/settings.local.json)",
-      "Bash(git -C 'C:\\\\gibens\\\\gibens' commit -m ' *)"
+      "Bash(git -C 'C:\\\\gibens\\\\gibens' commit -m ' *)",
+      "Bash(Get-ChildItem \"C:\\\\gibens\\\\gibens\\\\gibens\\\\supabase\\\\migrations\")",
+      "Bash(Sort-Object Name)",
+      "Bash(Select-Object Name)",
+      "Bash(git -C \"C:\\\\gibens\\\\gibens\" add -A)"
     ]
   }
 }

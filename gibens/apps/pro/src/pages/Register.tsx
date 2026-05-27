@@ -70,7 +70,7 @@ export default function Register() {
         status: 'pending',
         location: `POINT(${gps.coords.lon} ${gps.coords.lat})`,
       })
-      nav('/')
+      nav('/credentials')
     } else {
       setEmailSent(true)
       setLoading(false)

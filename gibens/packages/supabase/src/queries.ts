@@ -289,6 +289,26 @@ export const uploadAvatar = async (file: File, userId: string) => {
   return publicUrl
 }
 
+export const uploadVendorDoc = async (file: File, userId: string, type: 'license' | 'insurance') => {
+  const ext = file.name.split('.').pop()
+  const path = `${userId}/${type}.${ext}`
+  const { error } = await supabase.storage.from('vendor-docs').upload(path, file, { upsert: true })
+  if (error) throw error
+  const { data: { publicUrl } } = supabase.storage.from('vendor-docs').getPublicUrl(path)
+  return publicUrl
+}
+
+export const updateVendorCredentials = (userId: string, data: {
+  license_state?: string
+  license_number?: string
+  license_expiry?: string
+  license_url?: string
+  insurance_url?: string
+  credentials_submitted?: boolean
+  status?: string
+}) =>
+  supabase.from('vendor_profiles').update(data).eq('user_id', userId)
+
 export const markJobComplete = (jobId: string) =>
   supabase.from('jobs').update({ status: 'completed' }).eq('id', jobId)
 
