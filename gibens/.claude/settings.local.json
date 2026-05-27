@@ -20,7 +20,19 @@
       "mcp__Claude_in_Chrome__tabs_context_mcp",
       "Bash(curl -s http://localhost:5180/logo.svg)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5180/)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5180/index.html)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5180/index.html)",
+      "Bash(exit 0)",
+      "Bash(Start-Sleep -Seconds 5)",
+      "Bash(Get-Content \"C:\\\\Users\\\\eranh\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--gibens-gibens-gibens\\\\5f3a8b9d-1e86-4c98-a98e-2192d3dcf3e8\\\\tasks\\\\bs6nbkm7o.output\" -Raw)",
+      "Bash(git -C \"C:\\\\gibens\\\\gibens\" diff HEAD~1 HEAD -- gibens/apps/customer/src/pages/Support.tsx)",
+      "Bash(git -C \"C:\\\\gibens\\\\gibens\\\\gibens\" log --oneline -5)",
+      "Bash(git -C \"C:\\\\gibens\\\\gibens\\\\gibens\" diff 4a49f06 7567906)",
+      "Bash(npx tsc *)",
+      "PowerShell(Get-Process -Id 12892, 16852)",
+      "Bash(git -C \"C:\\\\gibens\\\\gibens\" status)",
+      "Bash(git -C \"C:\\\\gibens\\\\gibens\" diff)",
+      "Bash(git -C \"C:\\\\gibens\\\\gibens\" add start-dev.bat gibens/.claude/settings.local.json)",
+      "Bash(git -C 'C:\\\\gibens\\\\gibens' commit -m ' *)"
     ]
   }
 }
