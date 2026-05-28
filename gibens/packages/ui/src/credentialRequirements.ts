@@ -108,6 +108,7 @@ export const STATE_LICENSE_INFO: Record<string, Partial<Record<string, LicenseIn
     locksmith:        { authority: 'California Bureau of Security and Investigative Services (BSIS)', licenseType: 'Locksmith License' },
     roofing:          { authority: 'California Contractors State License Board (CSLB)', licenseType: 'C-39 Roofing Contractor License' },
     pool_service:     { authority: 'California Contractors State License Board (CSLB)', licenseType: 'C-53 Swimming Pool Contractor License' },
+    flooring:         { authority: 'California Contractors State License Board (CSLB)', licenseType: 'C-15 Flooring and Floor Covering Contractor License' },
   },
   CO: {
     electrician:      { authority: 'State Electrical Board of Colorado', licenseType: 'Electrical Contractor License' },

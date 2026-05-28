@@ -40,7 +40,7 @@ export default function Credentials() {
     })
   }, [user])
 
-  const needsLicense = LICENSED_CATEGORIES.has(category)
+  const needsLicense = LICENSED_CATEGORIES.has(category) || (state ? !!getLicenseInfo(state, category) : false)
   const needsInsurance = INSURED_CATEGORIES.has(category)
   const licenseInfo = state && category ? getLicenseInfo(state, category) : null
   const catName = CATEGORIES.find(c => c.slug === category)?.name || 'your trade'
