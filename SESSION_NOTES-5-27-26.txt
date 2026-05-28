@@ -1,0 +1,86 @@
+SESSION NOTES - 2026-05-27
+==========================
+
+## COMPLETED TODAY
+
+### Dev Server Fixes
+- Fixed port conflict: pro app (5174) was loading customer app due to stale process started with wrong port
+- Added `strictPort: true` to apps/pro/vite.config.ts to prevent silent fallback
+- Added startup bat files to Windows Startup folder so all 3 servers auto-start on login:
+  C:\Users\eranh\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\
+    - gibens-customer.bat (port 5173)
+    - gibens-pro.bat (port 5174)
+    - gibens-admin.bat (port 5175)
+
+### Credential Upload Fix
+- Fixed "Upload failed" error on pro credentials page
+- Cause: missing INSERT/UPDATE policies on vendor-docs Supabase storage bucket
+- Fix: ran SQL to create bucket + policies (INSERT for authenticated users, UPDATE for own docs, SELECT public read)
+
+### CA Flooring License
+- Added flooring to California's STATE_LICENSE_INFO in packages/ui/src/credentialRequirements.ts
+  { authority: 'California Contractors State License Board (CSLB)', licenseType: 'C-15 Flooring and Floor Covering Contractor License' }
+- Updated needsLicense logic in apps/pro/src/pages/Credentials.tsx to be state-aware:
+  const needsLicense = LICENSED_CATEGORIES.has(category) || (state ? !!getLicenseInfo(state, category) : false)
+  This means license fields appear when the selected state has a license entry for the trade,
+  not just for globally licensed categories.
+
+### GitHub Setup
+- Created GitHub repo: https://github.com/Gibens-Git/gibens (private, org: Gibens-Git)
+- Added remote and pushed all commits to main branch
+- Fixed workspace paths in root package.json: ["gibens/apps/*", "gibens/packages/*"]
+
+### Vercel Deployment (all 3 apps live)
+- Fixed build by changing "tsc && vite build" to "vite build" in all 3 app package.json files
+  (tsc fails without Supabase generated types)
+- Added vercel.json to each app for SPA routing: { "rewrites": [{"source": "/(.*)", "destination": "/index.html"}] }
+- Created 3 Vercel projects:
+  - gibens (customer) → gibens.vercel.app
+    Root: gibens/apps/customer, Install: cd ../../../ && npm install
+  - gibens_pro → gibens-t7x6.vercel.app
+    Root: gibens/apps/pro, Install: cd ../../../ && npm install
+  - gibens-admin → gibens-admin.vercel.app
+    Root: gibens/apps/admin, Install: cd ../../../ && npm install
+- Added env variables to each project (Supabase URL + anon key; admin also has Anthropic key)
+- Connected custom domains (DNS added in Squarespace, may still be propagating):
+  - gibens.com + www.gibens.com → customer app
+  - pro.gibens.com → pro app
+  - admin.gibens.com → admin app
+
+## PENDING / NEXT SESSION
+
+1. **find_nearby_vendors RPC** (HIGH PRIORITY)
+   - Need to update the Supabase RPC to filter out pros with credentials_submitted = false
+   - SQL was prepared last session but not yet run
+   - Run in Supabase SQL editor:
+     CREATE OR REPLACE FUNCTION find_nearby_vendors(...) with AND vp.credentials_submitted = true in WHERE clause
+   - User needs to share current function definition (run: SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname = 'find_nearby_vendors')
+   - OR check if the SQL from the session summary still applies
+
+2. **Verify domains are live**
+   - Check gibens.com, pro.gibens.com, admin.gibens.com are showing correct apps
+   - DNS can take up to a few hours to propagate
+
+3. **notify-vendors edge function**
+   - Add credentials_submitted = true filter so unverified pros don't get notified of new jobs
+
+4. **Pro app - chat fixes (from earlier sessions)**
+   - Test photo sending from PRO side (pro → customer)
+   - Add try/catch error handling to pro Chat.tsx handlePhoto
+   - Verify thread badge clears end-to-end for both sides
+
+5. **Supabase types generation (optional)**
+   - Generate types from Supabase schema to re-enable tsc in build
+   - Run: npx supabase gen types typescript --project-id afdpvuxcthzjwkeuexve > packages/supabase/src/types.ts
+
+## VERCEL PROJECT URLS
+- Customer: https://vercel.com/eran-hason-s-projects/gibens
+- Pro: https://vercel.com/eran-hason-s-projects/gibens_pro
+- Admin: https://vercel.com/eran-hason-s-projects/gibens-admin
+
+## KEY INFO
+- Supabase project: https://afdpvuxcthzjwkeuexve.supabase.co
+- GitHub: https://github.com/Gibens-Git/gibens
+- Local repo: C:\gibens\gibens (git root), C:\gibens\gibens\gibens (monorepo)
+- Dev servers: localhost:5173 (customer), localhost:5174 (pro), localhost:5175 (admin)
+- Auto-deploy: pushing to main branch auto-deploys all 3 Vercel projects
