@@ -42,7 +42,8 @@
       "PowerShell(netstat -ano | Select-String \":517[0-9]\" | ForEach-Object { $_ -replace '\\\\s+', ' ' })",
       "PowerShell(foreach \\($pid in 12892, 16852, 17284, 2756, 14196\\) { $p = Get-WmiObject Win32_Process -Filter \"ProcessId = $pid\"; \"PID $pid`: $\\($p.CommandLine\\)\" })",
       "Bash(gh --version)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(find C:/gibens/gibens -name \"*.ts\" -path \"*/functions/*\" 2>/dev/null | head -20)"
     ]
   }
 }
