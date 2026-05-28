@@ -1,7 +1,7 @@
 {
   "name": "gibens",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": ["gibens/apps/*", "gibens/packages/*"],
   "scripts": {
     "dev:customer": "npm -w apps/customer run dev",
     "dev:pro": "npm -w apps/pro run dev",
