@@ -43,7 +43,8 @@
       "PowerShell(foreach \\($pid in 12892, 16852, 17284, 2756, 14196\\) { $p = Get-WmiObject Win32_Process -Filter \"ProcessId = $pid\"; \"PID $pid`: $\\($p.CommandLine\\)\" })",
       "Bash(gh --version)",
       "Bash(git push *)",
-      "Bash(find C:/gibens/gibens -name \"*.ts\" -path \"*/functions/*\" 2>/dev/null | head -20)"
+      "Bash(find C:/gibens/gibens -name \"*.ts\" -path \"*/functions/*\" 2>/dev/null | head -20)",
+      "Bash(gh pr create --title 'Fix AI support chat on mobile \\(customer app\\)' --body ' *)"
     ]
   }
 }
