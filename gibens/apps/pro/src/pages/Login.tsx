@@ -30,6 +30,8 @@ export default function Login() {
             status: 'pending',
             location: meta.location_wkt as string,
           })
+          nav('/credentials')
+          return
         }
       }
     }
