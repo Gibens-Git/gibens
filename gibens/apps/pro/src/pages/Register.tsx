@@ -67,7 +67,13 @@ export default function Register() {
     e.preventDefault()
     if (!gps.coords) { setError('Please detect your location — it is required to receive job leads.'); return }
     setLoading(true); setError('')
-    const { data, error: err } = await signUp(form.email, form.password, form.name, 'vendor')
+    const vendorMeta = {
+      phone: form.phone || null,
+      category: form.category,
+      travel_radius_mi: parseInt(form.radius),
+      location_wkt: `POINT(${gps.coords.lon} ${gps.coords.lat})`,
+    }
+    const { data, error: err } = await signUp(form.email, form.password, form.name, 'vendor', vendorMeta)
     if (err) { setError(err.message); setLoading(false); return }
 
     if (data.session && data.user) {

@@ -4,11 +4,11 @@ import { supabase } from './client'
 
 // ---- AUTH ----
 
-export const signUp = (email: string, password: string, fullName: string, role: 'customer' | 'vendor') =>
+export const signUp = (email: string, password: string, fullName: string, role: 'customer' | 'vendor', extra?: Record<string, unknown>) =>
   supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName, role } },
+    options: { data: { full_name: fullName, role, ...extra } },
   })
 
 export const signIn = (email: string, password: string) =>
