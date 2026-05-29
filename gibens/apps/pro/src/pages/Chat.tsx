@@ -102,12 +102,19 @@ export default function Chat() {
   const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !jobId || !user) return
+    setSendError('')
     setSending(true)
-    const url = await uploadJobPhoto(file, jobId)
-    const { data: msg } = await sendMessage(jobId, user.id, undefined, url)
-    if (msg) {
-      setMessages(prev => [...prev, msg as Message])
-      lastMsgAt.current = (msg as Message).created_at
+    try {
+      const url = await uploadJobPhoto(file, jobId)
+      const { data: msg, error } = await sendMessage(jobId, user.id, undefined, url)
+      if (error) {
+        setSendError('Failed to send photo — ' + (error.message || 'check your connection'))
+      } else if (msg) {
+        setMessages(prev => [...prev, msg as Message])
+        lastMsgAt.current = (msg as Message).created_at
+      }
+    } catch (err) {
+      setSendError('Failed to send photo — ' + (err instanceof Error ? err.message : 'check your connection'))
     }
     setSending(false)
   }

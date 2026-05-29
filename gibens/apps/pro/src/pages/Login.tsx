@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { signIn, signInWithGoogle, signInWithApple, signInWithMicrosoft } from '@gibens/supabase'
+import { signIn, signInWithGoogle, signInWithApple, signInWithMicrosoft, supabase } from '@gibens/supabase'
 
 export default function Login() {
   const nav = useNavigate()
@@ -12,9 +12,31 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true); setError('')
-    const { error: err } = await signIn(email, password)
-    if (err) { setError(err.message); setLoading(false) }
-    else nav('/')
+    const { data, error: err } = await signIn(email, password)
+    if (err) { setError(err.message); setLoading(false); return }
+
+    // Complete vendor profile creation if it wasn't done at registration (email confirmation flow)
+    const user = data.user
+    if (user) {
+      const meta = user.user_metadata as Record<string, unknown>
+      if (meta?.location_wkt) {
+        const { data: existing } = await supabase.from('users').select('id').eq('id', user.id).maybeSingle()
+        if (!existing) {
+          await supabase.from('users').insert({ id: user.id, role: 'vendor', full_name: meta.full_name as string, phone: (meta.phone as string) || null })
+          await supabase.from('vendor_profiles').insert({
+            user_id: user.id,
+            category: meta.category as string,
+            travel_radius_mi: meta.travel_radius_mi as number,
+            status: 'pending',
+            location: meta.location_wkt as string,
+          })
+          nav('/credentials')
+          return
+        }
+      }
+    }
+
+    nav('/')
   }
 
   return (
