@@ -6,12 +6,21 @@ import { CATEGORIES } from '@gibens/ui'
 function useGPS() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null)
+  const [gpsError, setGpsError] = useState('')
 
   const detect = () => {
     setStatus('loading')
+    setGpsError('')
     navigator.geolocation.getCurrentPosition(
       pos => { setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }); setStatus('done') },
-      () => setStatus('error'),
+      (err: GeolocationPositionError) => {
+        setStatus('error')
+        if (err.code === 1) {
+          setGpsError('Location access was denied. Please enter your address manually below.')
+        } else {
+          setGpsError('Could not detect location. Please enter your address manually below.')
+        }
+      },
       { timeout: 10000 }
     )
   }
@@ -21,7 +30,7 @@ function useGPS() {
     setStatus('done')
   }
 
-  return { status, coords, detect, setManual }
+  return { status, coords, gpsError, detect, setManual }
 }
 
 export default function Register() {
@@ -163,6 +172,7 @@ export default function Register() {
                   <i className={gps.status === 'loading' ? 'ti ti-loader' : 'ti ti-map-pin'} />
                   {gps.status === 'loading' ? 'Detecting...' : 'Use my GPS location'}
                 </button>
+                {gps.gpsError && <p style={{ fontSize: 12, color: '#E24B4A', margin: 0 }}>{gps.gpsError}</p>}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#bbb', fontSize: 12 }}>
                   <div style={{ flex: 1, height: 1, background: '#eee' }} />
                   or enter address
