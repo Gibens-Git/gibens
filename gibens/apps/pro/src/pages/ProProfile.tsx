@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { signOut, getVendorProfile, updateVendorProfile, getVendorReviews, uploadAvatar, upsertUser, supabase } from '@gibens/supabase'
+import { signOut, getVendorProfile, updateVendorProfile, getVendorReviews, uploadAvatar, upsertUser } from '@gibens/supabase'
 import { getAvatarColor, getInitials, formatRelative, CATEGORIES } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { ReviewWithUser } from '@gibens/supabase'
@@ -18,21 +18,13 @@ function useGPS() {
     )
   }
 
-  const setManual = (lat: number, lon: number) => { setCoords({ lat, lon }); setStatus('done') }
-
-  return { status, coords, detect, setManual }
+  return { status, coords, detect }
 }
 
 export default function ProProfile() {
   const nav = useNavigate()
   const { user } = useAuth()
   const [vendor, setVendor] = useState<Record<string, unknown> | null>(null)
-  const [profileMissing, setProfileMissing] = useState(false)
-  const [newCategory, setNewCategory] = useState('')
-  const [newRadius, setNewRadius] = useState('15')
-  const [creating, setCreating] = useState(false)
-  const [manualAddress, setManualAddress] = useState('')
-  const [geocoding, setGeocoding] = useState(false)
   const [radius, setRadius] = useState(15)
   const [saving, setSaving] = useState(false)
   const [updatingLoc, setUpdatingLoc] = useState(false)
@@ -40,7 +32,6 @@ export default function ProProfile() {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([])
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
-  const createGPS = useGPS()
   const updateGPS = useGPS()
 
   useEffect(() => {
@@ -51,7 +42,7 @@ export default function ProProfile() {
         setVendor(data as Record<string, unknown>)
         setRadius((data as Record<string, unknown>).travel_radius_mi as number || 15)
       } else if (error?.code === 'PGRST116' || !data) {
-        setProfileMissing(true)
+        nav('/setup')
       }
     })
     getVendorReviews(user.id).then(({ data }) => setReviews((data as ReviewWithUser[]) || []))
@@ -69,32 +60,6 @@ export default function ProProfile() {
       console.error('Avatar upload failed:', err)
     }
     setUploadingAvatar(false)
-  }
-
-  const geocodeAddress = async () => {
-    if (!manualAddress.trim()) return
-    setGeocoding(true)
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(manualAddress)}&format=json&limit=1`)
-      const data = await res.json()
-      if (data?.[0]) { createGPS.setManual(parseFloat(data[0].lat), parseFloat(data[0].lon)) }
-    } catch { /* ignore */ }
-    setGeocoding(false)
-  }
-
-  const createProfile = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user || !newCategory) return
-    if (!createGPS.coords) { alert('Please detect your location first — it is required to receive job leads.'); return }
-    setCreating(true)
-    await supabase.from('vendor_profiles').insert({
-      user_id: user.id,
-      category: newCategory,
-      travel_radius_mi: parseInt(newRadius),
-      status: 'pending',
-      location: `POINT(${createGPS.coords.lon} ${createGPS.coords.lat})`,
-    })
-    nav('/credentials')
   }
 
   const saveRadius = async () => {
@@ -116,78 +81,9 @@ export default function ProProfile() {
   const { bg, tc } = getAvatarColor(user.full_name)
   const cat = CATEGORIES.find(c => c.slug === (vendor?.category as string))
 
-  if (profileMissing) return (
-    <div style={{ padding: 24 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 500, marginBottom: 6 }}>Complete your vendor profile</h2>
-      <p style={{ fontSize: 14, color: '#666', marginBottom: 20 }}>Choose your service category and travel radius to start receiving job leads.</p>
-      <form onSubmit={createProfile} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div>
-          <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>Your service category *</label>
-          <select required value={newCategory} onChange={e => setNewCategory(e.target.value)}
-            style={{ width: '100%', padding: '10px 14px', border: '0.5px solid #ccc', borderRadius: 10, fontSize: 15 }}>
-            <option value="">Select a category...</option>
-            {CATEGORIES.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>Travel radius: {newRadius} miles</label>
-          <input type="range" min="5" max="100" step="5" value={newRadius} onChange={e => setNewRadius(e.target.value)} style={{ width: '100%' }} />
-        </div>
-        <div>
-          <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>
-            Your location <span style={{ color: '#E24B4A' }}>*</span>
-          </label>
-          {createGPS.status === 'done' ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#EAF3DE', borderRadius: 8, padding: '10px 12px' }}>
-              <i className="ti ti-map-pin" style={{ color: '#3B6D11', fontSize: 16 }} />
-              <span style={{ fontSize: 13, color: '#3B6D11', flex: 1 }}>Location set</span>
-              <button type="button" onClick={createGPS.detect}
-                style={{ background: 'none', border: 'none', fontSize: 12, color: '#3B6D11', cursor: 'pointer', textDecoration: 'underline' }}>
-                Re-detect
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button type="button" onClick={createGPS.detect} disabled={createGPS.status === 'loading'}
-                style={{ width: '100%', background: '#f4f4f2', border: '0.5px solid #ccc', borderRadius: 10, padding: '10px 14px', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#555' }}>
-                <i className={createGPS.status === 'loading' ? 'ti ti-loader' : 'ti ti-map-pin'} />
-                {createGPS.status === 'loading' ? 'Detecting...' : createGPS.status === 'error' ? 'Retry GPS' : 'Use my GPS location'}
-              </button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#bbb', fontSize: 12 }}>
-                <div style={{ flex: 1, height: 1, background: '#eee' }} />
-                or enter address
-                <div style={{ flex: 1, height: 1, background: '#eee' }} />
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input type="text" value={manualAddress} onChange={e => setManualAddress(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), geocodeAddress())}
-                  placeholder="e.g. 860 5th Ave, San Diego CA"
-                  style={{ flex: 1, padding: '10px 12px', border: '0.5px solid #ccc', borderRadius: 10, fontSize: 14 }} />
-                <button type="button" onClick={geocodeAddress} disabled={geocoding || !manualAddress.trim()}
-                  style={{ background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 10, padding: '0 14px', fontSize: 13, cursor: 'pointer' }}>
-                  {geocoding ? '...' : 'Find'}
-                </button>
-              </div>
-            </div>
-          )}
-          <p style={{ fontSize: 12, color: '#aaa', marginTop: 5 }}>Used to match you with nearby job leads</p>
-        </div>
-        <button type="submit" disabled={creating}
-          style={{ background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 500 }}>
-          {creating ? 'Creating...' : 'Create profile'}
-        </button>
-      </form>
-      <button onClick={async () => { await signOut(); nav('/login') }}
-        style={{ width: '100%', marginTop: 16, padding: '12px 0', background: 'none', border: '0.5px solid #E24B4A', borderRadius: 10, color: '#E24B4A', fontSize: 14, cursor: 'pointer' }}>
-        Sign out
-      </button>
-    </div>
-  )
-
   return (
     <div>
       <div style={{ padding: '24px 20px 20px', textAlign: 'center', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fff' }}>
-        {/* Avatar with upload */}
         <label style={{ cursor: 'pointer', position: 'relative', display: 'inline-block', margin: '0 auto 12px' }}>
           {avatarUrl ? (
             <img src={avatarUrl} alt={user.full_name} style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '2px solid #0F4C8A', display: 'block' }} />
@@ -249,8 +145,8 @@ export default function ProProfile() {
           </div>
 
           {[
-            { icon: 'credit-card', label: 'Payout method', action: undefined },
-            { icon: 'bell', label: 'Notifications', action: undefined },
+            { icon: 'credit-card', label: 'Payout method' },
+            { icon: 'bell', label: 'Notifications' },
           ].map(r => (
             <div key={r.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
@@ -260,10 +156,8 @@ export default function ProProfile() {
               <i className="ti ti-chevron-right" style={{ color: '#ccc', fontSize: 16 }} />
             </div>
           ))}
-          <div
-            onClick={() => nav('/credentials')}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px', borderBottom: '0.5px solid rgba(0,0,0,0.07)', cursor: 'pointer' }}
-          >
+          <div onClick={() => nav('/credentials')}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px', borderBottom: '0.5px solid rgba(0,0,0,0.07)', cursor: 'pointer' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
               <i className="ti ti-license" style={{ color: '#0F4C8A', fontSize: 18 }} />
               License &amp; insurance
@@ -278,9 +172,7 @@ export default function ProProfile() {
           </div>
         </div>
 
-        <p style={{ fontSize: 15, fontWeight: 500, marginBottom: 12 }}>
-          Reviews ({reviews.length})
-        </p>
+        <p style={{ fontSize: 15, fontWeight: 500, marginBottom: 12 }}>Reviews ({reviews.length})</p>
         {reviews.length === 0 ? (
           <p style={{ fontSize: 13, color: '#aaa', textAlign: 'center', padding: '16px 0', marginBottom: 16 }}>No reviews yet</p>
         ) : (

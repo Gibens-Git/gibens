@@ -11,6 +11,7 @@ import Chat from './pages/Chat'
 import Earnings from './pages/Earnings'
 import ProProfile from './pages/ProProfile'
 import Support from './pages/Support'
+import Setup from './pages/Setup'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -26,6 +27,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/setup" element={<PrivateRoute><Setup /></PrivateRoute>} />
       <Route path="/credentials" element={<PrivateRoute><Credentials /></PrivateRoute>} />
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Dashboard />} />

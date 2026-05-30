@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { signIn, signInWithGoogle, signInWithApple, signInWithMicrosoft, supabase } from '@gibens/supabase'
+import { signIn, signInWithGoogle, supabase } from '@gibens/supabase'
 
 export default function Login() {
   const nav = useNavigate()
@@ -15,28 +15,10 @@ export default function Login() {
     const { data, error: err } = await signIn(email, password)
     if (err) { setError(err.message); setLoading(false); return }
 
-    // Complete vendor profile creation if it wasn't done at registration (email confirmation flow)
     const user = data.user
     if (user) {
-      const meta = user.user_metadata as Record<string, unknown>
-      if (meta?.location_wkt) {
-        const { data: existingProfile } = await supabase.from('vendor_profiles').select('user_id').eq('user_id', user.id).maybeSingle()
-        if (!existingProfile) {
-          const { data: existingUser } = await supabase.from('users').select('id').eq('id', user.id).maybeSingle()
-          if (!existingUser) {
-            await supabase.from('users').insert({ id: user.id, role: 'vendor', full_name: meta.full_name as string, phone: (meta.phone as string) || null })
-          }
-          await supabase.from('vendor_profiles').insert({
-            user_id: user.id,
-            category: meta.category as string,
-            travel_radius_mi: meta.travel_radius_mi as number,
-            status: 'pending',
-            location: meta.location_wkt as string,
-          })
-          nav('/credentials')
-          return
-        }
-      }
+      const { data: profile } = await supabase.from('vendor_profiles').select('user_id').eq('user_id', user.id).maybeSingle()
+      if (!profile) { nav('/setup'); return }
     }
 
     nav('/')
@@ -88,18 +70,14 @@ export default function Login() {
           <div style={{ flex: 1, height: 1, background: '#eee' }} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[
-            { label: 'Google', icon: 'brand-google', action: signInWithGoogle },
-          ].map(p => (
-            <button key={p.label} onClick={p.action} type="button" style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              border: '0.5px solid #ddd', borderRadius: 10, padding: '11px 14px',
-              background: '#fff', fontSize: 14, cursor: 'pointer', color: '#333', fontWeight: 500,
-            }}>
-              <i className={`ti ti-${p.icon}`} style={{ fontSize: 18 }} />
-              Continue with {p.label}
-            </button>
-          ))}
+          <button onClick={signInWithGoogle} type="button" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            border: '0.5px solid #ddd', borderRadius: 10, padding: '11px 14px',
+            background: '#fff', fontSize: 14, cursor: 'pointer', color: '#333', fontWeight: 500,
+          }}>
+            <i className="ti ti-brand-google" style={{ fontSize: 18 }} />
+            Continue with Google
+          </button>
         </div>
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: '#888' }}>
           New vendor? <Link to="/register" style={{ color: '#0F4C8A', fontWeight: 500 }}>Create account</Link>
