@@ -1,0 +1,105 @@
+SESSION NOTES - 2026-05-28
+==========================
+
+## COMPLETED TODAY
+
+### AI Support Chat Fix (Customer App)
+- Added VITE_ANTHROPIC_API_KEY to Vercel customer project (gibens)
+- Was missing — only admin app had it — causing "Support chat is not configured" on mobile
+- Triggered fresh build via empty commit so key is baked into Vite bundle
+- AI chat at gibens.com/support is now working
+
+### Supabase Key Migration
+- Supabase migrated to new key format: sb_publishable_... (replaces old eyJ... JWT anon key)
+- Updated VITE_SUPABASE_ANON_KEY in all 3 Vercel projects with new publishable key
+- Updated VITE_SUPABASE_URL in pro project (was placeholder value)
+- Old /settings/api page is gone — new keys at /settings/api-keys
+
+### Supabase Auth Email Redirect Fix
+- After email confirmation, Supabase was redirecting to localhost:3000
+- Fixed: Supabase → Authentication → URL Configuration → Site URL = https://pro.gibens.com
+- Added redirect URL: https://pro.gibens.com/**
+
+### find_nearby_vendors RPC — Filter Unverified Pros
+- Added AND vp.credentials_submitted = TRUE to WHERE clause
+- Had to DROP FUNCTION first (return type change), then CREATE OR REPLACE
+- Unverified pros no longer appear in job search results
+
+### notify-vendors Edge Function
+- No code changes needed — already calls find_nearby_vendors RPC
+- Since RPC now filters credentials_submitted = TRUE, edge function is automatically fixed
+
+### Pro App — Chat Photo Upload Error Handling
+- Added try/catch to handlePhoto in apps/pro/src/pages/Chat.tsx
+- Now shows error message if photo upload fails instead of freezing spinner
+- Also clears sendError before attempting upload
+
+### GPS Error Message on Pro Registration
+- When GPS is denied/unavailable, was silently failing with no feedback
+- Added gpsError state to useGPS hook in Register.tsx
+- Now shows red error message: "Location access was denied. Please enter your address manually below."
+
+### Vendor Profile Not Created After Email Confirmation (MAJOR FIX)
+- Root cause: when email confirmation is required, data.session is null after signUp
+  so the users and vendor_profiles inserts in Register.tsx never ran
+- Fix: store vendor data (category, travel_radius_mi, location_wkt, phone) in auth user metadata during signup
+- On first login, Login.tsx checks if users row exists — if not, creates users + vendor_profiles from metadata
+- After creating profile on first login, redirects to /credentials instead of /
+
+### Pro Registration — Category Filter Working
+- Dashboard was showing all jobs when vendor profile was missing
+- Now that profile creation is fixed, getVendorFeed(data.category) filters correctly
+
+### Vercel Branch/Production Issue
+- Feature branch (session/2026-05-28-ai-chat-fix) deploys as Preview, not Production
+- Had to merge PR to main on GitHub to trigger production deploy
+- Alternatively: 3-dot menu → Promote to Production (sometimes unavailable on Hobby plan)
+
+## PENDING / NEXT SESSION
+
+1. **Test full vendor registration flow** (HIGH PRIORITY)
+   - Hit Supabase email rate limit during testing — wait ~1 hour between attempts
+   - Test with fresh email: register → confirm email → login → should redirect to /credentials
+   - Verify vendor_profiles row created with correct category
+   - Verify dashboard shows only jobs matching vendor's category
+
+2. **GPS option on credentials/profile page**
+   - User wants GPS or address option somewhere (clarify which page)
+   - Currently credentials page has state dropdown — auto-detect state from GPS?
+
+3. **Thread badge clearing**
+   - Not yet verified end-to-end — deferred when category bug was found
+   - Test: pro receives message → badge shows → opens chat → badge clears on both sides
+
+4. **Domain transfer (Squarespace → Hostinger)**
+   - User purchased Hostinger plan
+   - Waiting for auth/EPP code from Squarespace
+   - Once received: initiate transfer in Hostinger
+   - After transfer: re-add DNS records in Hostinger:
+     @ → Vercel (check exact value in Vercel project settings)
+     www → cname.vercel-dns.com
+     pro → cname.vercel-dns.com
+     admin → cname.vercel-dns.com
+
+5. **Supabase types generation (optional)**
+   - Run: npx supabase gen types typescript --project-id afdpvuxcthzjwkeuexve > packages/supabase/src/types.ts
+   - Re-enables tsc in build command
+
+## KEY INFO
+- Supabase project: https://afdpvuxcthzjwkeuexve.supabase.co
+- Supabase new anon key format: sb_publishable_... (from /settings/api-keys)
+- GitHub: https://github.com/Gibens-Git/gibens
+- Local repo: C:\gibens\gibens (git root), C:\gibens\gibens\gibens (monorepo)
+- Dev servers: localhost:5173 (customer), localhost:5174 (pro), localhost:5175 (admin)
+- Vercel auto-deploys on push to main branch (production)
+- Feature branches deploy as Preview only — must merge to main for production
+
+## VERCEL PROJECT URLS
+- Customer: https://vercel.com/eran-hason-s-projects/gibens
+- Pro: https://vercel.com/eran-hason-s-projects/gibens_pro
+- Admin: https://vercel.com/eran-hason-s-projects/gibens-admin
+
+## LIVE URLS
+- gibens.com / www.gibens.com → customer app
+- pro.gibens.com → pro app
+- admin.gibens.com → admin app
