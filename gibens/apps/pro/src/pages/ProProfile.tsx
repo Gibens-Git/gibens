@@ -18,7 +18,9 @@ function useGPS() {
     )
   }
 
-  return { status, coords, detect }
+  const setManual = (lat: number, lon: number) => { setCoords({ lat, lon }); setStatus('done') }
+
+  return { status, coords, detect, setManual }
 }
 
 export default function ProProfile() {
@@ -29,6 +31,8 @@ export default function ProProfile() {
   const [newCategory, setNewCategory] = useState('')
   const [newRadius, setNewRadius] = useState('15')
   const [creating, setCreating] = useState(false)
+  const [manualAddress, setManualAddress] = useState('')
+  const [geocoding, setGeocoding] = useState(false)
   const [radius, setRadius] = useState(15)
   const [saving, setSaving] = useState(false)
   const [updatingLoc, setUpdatingLoc] = useState(false)
@@ -67,6 +71,17 @@ export default function ProProfile() {
     setUploadingAvatar(false)
   }
 
+  const geocodeAddress = async () => {
+    if (!manualAddress.trim()) return
+    setGeocoding(true)
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(manualAddress)}&format=json&limit=1`)
+      const data = await res.json()
+      if (data?.[0]) { createGPS.setManual(parseFloat(data[0].lat), parseFloat(data[0].lon)) }
+    } catch { /* ignore */ }
+    setGeocoding(false)
+  }
+
   const createProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !newCategory) return
@@ -79,9 +94,7 @@ export default function ProProfile() {
       status: 'pending',
       location: `POINT(${createGPS.coords.lon} ${createGPS.coords.lat})`,
     })
-    const { data } = await getVendorProfile(user.id)
-    if (data) { setVendor(data as Record<string, unknown>); setRadius(parseInt(newRadius)); setProfileMissing(false) }
-    setCreating(false)
+    nav('/credentials')
   }
 
   const saveRadius = async () => {
@@ -127,18 +140,35 @@ export default function ProProfile() {
           {createGPS.status === 'done' ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#EAF3DE', borderRadius: 8, padding: '10px 12px' }}>
               <i className="ti ti-map-pin" style={{ color: '#3B6D11', fontSize: 16 }} />
-              <span style={{ fontSize: 13, color: '#3B6D11', flex: 1 }}>Location detected</span>
+              <span style={{ fontSize: 13, color: '#3B6D11', flex: 1 }}>Location set</span>
               <button type="button" onClick={createGPS.detect}
                 style={{ background: 'none', border: 'none', fontSize: 12, color: '#3B6D11', cursor: 'pointer', textDecoration: 'underline' }}>
                 Re-detect
               </button>
             </div>
           ) : (
-            <button type="button" onClick={createGPS.detect} disabled={createGPS.status === 'loading'}
-              style={{ width: '100%', background: createGPS.status === 'error' ? '#FEF3C7' : '#f4f4f2', border: createGPS.status === 'error' ? '0.5px solid #FCD34D' : '0.5px solid #ccc', borderRadius: 10, padding: '10px 14px', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: createGPS.status === 'error' ? '#92400E' : '#555' }}>
-              <i className="ti ti-map-pin" />
-              {createGPS.status === 'loading' ? 'Detecting...' : createGPS.status === 'error' ? 'Could not detect — tap to retry' : 'Detect my location'}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button type="button" onClick={createGPS.detect} disabled={createGPS.status === 'loading'}
+                style={{ width: '100%', background: '#f4f4f2', border: '0.5px solid #ccc', borderRadius: 10, padding: '10px 14px', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#555' }}>
+                <i className={createGPS.status === 'loading' ? 'ti ti-loader' : 'ti ti-map-pin'} />
+                {createGPS.status === 'loading' ? 'Detecting...' : createGPS.status === 'error' ? 'Retry GPS' : 'Use my GPS location'}
+              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#bbb', fontSize: 12 }}>
+                <div style={{ flex: 1, height: 1, background: '#eee' }} />
+                or enter address
+                <div style={{ flex: 1, height: 1, background: '#eee' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input type="text" value={manualAddress} onChange={e => setManualAddress(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), geocodeAddress())}
+                  placeholder="e.g. 860 5th Ave, San Diego CA"
+                  style={{ flex: 1, padding: '10px 12px', border: '0.5px solid #ccc', borderRadius: 10, fontSize: 14 }} />
+                <button type="button" onClick={geocodeAddress} disabled={geocoding || !manualAddress.trim()}
+                  style={{ background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 10, padding: '0 14px', fontSize: 13, cursor: 'pointer' }}>
+                  {geocoding ? '...' : 'Find'}
+                </button>
+              </div>
+            </div>
           )}
           <p style={{ fontSize: 12, color: '#aaa', marginTop: 5 }}>Used to match you with nearby job leads</p>
         </div>
