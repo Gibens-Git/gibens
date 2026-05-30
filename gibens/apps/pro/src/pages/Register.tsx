@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { signUp, supabase } from '@gibens/supabase'
 import { CATEGORIES } from '@gibens/ui'
@@ -12,7 +12,7 @@ function useGPS() {
     setStatus('loading')
     setGpsError('')
     navigator.geolocation.getCurrentPosition(
-      pos => { setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }); setStatus('done') },
+      pos => { setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }); setStatus('done'); setGpsError('') },
       (err: GeolocationPositionError) => {
         setStatus('error')
         if (err.code === 1) {
@@ -28,6 +28,7 @@ function useGPS() {
   const setManual = (lat: number, lon: number) => {
     setCoords({ lat, lon })
     setStatus('done')
+    setGpsError('')
   }
 
   return { status, coords, gpsError, detect, setManual }
@@ -59,6 +60,8 @@ export default function Register() {
     }
     setGeocoding(false)
   }
+
+  useEffect(() => { if (gps.status === 'done') setError('') }, [gps.status])
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }))

@@ -20,9 +20,12 @@ export default function Login() {
     if (user) {
       const meta = user.user_metadata as Record<string, unknown>
       if (meta?.location_wkt) {
-        const { data: existing } = await supabase.from('users').select('id').eq('id', user.id).maybeSingle()
-        if (!existing) {
-          await supabase.from('users').insert({ id: user.id, role: 'vendor', full_name: meta.full_name as string, phone: (meta.phone as string) || null })
+        const { data: existingProfile } = await supabase.from('vendor_profiles').select('user_id').eq('user_id', user.id).maybeSingle()
+        if (!existingProfile) {
+          const { data: existingUser } = await supabase.from('users').select('id').eq('id', user.id).maybeSingle()
+          if (!existingUser) {
+            await supabase.from('users').insert({ id: user.id, role: 'vendor', full_name: meta.full_name as string, phone: (meta.phone as string) || null })
+          }
           await supabase.from('vendor_profiles').insert({
             user_id: user.id,
             category: meta.category as string,
