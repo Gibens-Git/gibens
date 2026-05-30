@@ -1,94 +1,25 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { signUp, supabase } from '@gibens/supabase'
-import { CATEGORIES } from '@gibens/ui'
-
-function useGPS() {
-  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
-  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null)
-  const [gpsError, setGpsError] = useState('')
-
-  const detect = () => {
-    setStatus('loading')
-    setGpsError('')
-    navigator.geolocation.getCurrentPosition(
-      pos => { setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }); setStatus('done'); setGpsError('') },
-      (err: GeolocationPositionError) => {
-        setStatus('error')
-        if (err.code === 1) {
-          setGpsError('Location access was denied. Please enter your address manually below.')
-        } else {
-          setGpsError('Could not detect location. Please enter your address manually below.')
-        }
-      },
-      { timeout: 10000 }
-    )
-  }
-
-  const setManual = (lat: number, lon: number) => {
-    setCoords({ lat, lon })
-    setStatus('done')
-    setGpsError('')
-  }
-
-  return { status, coords, gpsError, detect, setManual }
-}
+import { signUp } from '@gibens/supabase'
 
 export default function Register() {
   const nav = useNavigate()
-  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', category: '', radius: '15' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
-  const [manualAddress, setManualAddress] = useState('')
-  const [geocoding, setGeocoding] = useState(false)
-  const gps = useGPS()
 
-  const geocodeAddress = async () => {
-    if (!manualAddress.trim()) return
-    setGeocoding(true)
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(manualAddress)}&format=json&limit=1`)
-      const data = await res.json()
-      if (data?.[0]) {
-        gps.setManual(parseFloat(data[0].lat), parseFloat(data[0].lon))
-      } else {
-        setError('Address not found — try a more specific address or city.')
-      }
-    } catch {
-      setError('Could not look up address. Check your connection and try again.')
-    }
-    setGeocoding(false)
-  }
-
-  useEffect(() => { if (gps.status === 'done') setError('') }, [gps.status])
-
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!gps.coords) { setError('Please detect your location — it is required to receive job leads.'); return }
     setLoading(true); setError('')
-    const vendorMeta = {
-      phone: form.phone || null,
-      category: form.category,
-      travel_radius_mi: parseInt(form.radius),
-      location_wkt: `POINT(${gps.coords.lon} ${gps.coords.lat})`,
-    }
-    const { data, error: err } = await signUp(form.email, form.password, form.name, 'vendor', vendorMeta)
+    const { data, error: err } = await signUp(form.email, form.password, form.name, 'vendor', { phone: form.phone || null })
     if (err) { setError(err.message); setLoading(false); return }
 
     if (data.session && data.user) {
-      await supabase.from('users').insert({ id: data.user.id, role: 'vendor', full_name: form.name, phone: form.phone || null })
-      await supabase.from('vendor_profiles').insert({
-        user_id: data.user.id,
-        category: form.category,
-        travel_radius_mi: parseInt(form.radius),
-        status: 'pending',
-        location: `POINT(${gps.coords.lon} ${gps.coords.lat})`,
-      })
-      nav('/credentials')
+      nav('/setup')
     } else {
       setEmailSent(true)
       setLoading(false)
@@ -102,7 +33,7 @@ export default function Register() {
         <h2 style={{ fontSize: 20, fontWeight: 500, marginBottom: 8 }}>Check your email</h2>
         <p style={{ color: '#666', fontSize: 14, lineHeight: 1.5 }}>
           We sent a confirmation link to <strong>{form.email}</strong>.<br />
-          Click it to activate your vendor account, then come back and sign in.
+          Click it to activate your account, then sign in to complete your profile.
         </p>
         <button onClick={() => nav('/login')} style={{ marginTop: 24, background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 28px', fontSize: 15, cursor: 'pointer' }}>
           Go to sign in
@@ -143,69 +74,10 @@ export default function Register() {
           ].map(f => (
             <div key={f.key}>
               <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>{f.label}</label>
-              <input type={f.type} required={f.key !== 'phone'} value={(form as Record<string,string>)[f.key]} onChange={set(f.key)}
+              <input type={f.type} required={f.key !== 'phone'} value={(form as Record<string, string>)[f.key]} onChange={set(f.key)}
                 style={{ width: '100%', padding: '10px 14px', border: '0.5px solid #ccc', borderRadius: 10, fontSize: 15 }} placeholder={f.placeholder} />
             </div>
           ))}
-          <div>
-            <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>Your service category</label>
-            <select required value={form.category} onChange={set('category')}
-              style={{ width: '100%', padding: '10px 14px', border: '0.5px solid #ccc', borderRadius: 10, fontSize: 15 }}>
-              <option value="">Select your category...</option>
-              {CATEGORIES.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>Travel radius: {form.radius} miles</label>
-            <input type="range" min="5" max="100" step="5" value={form.radius} onChange={set('radius')} style={{ width: '100%' }} />
-          </div>
-
-          {/* Location */}
-          <div>
-            <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6 }}>
-              Your location <span style={{ color: '#E24B4A' }}>*</span>
-            </label>
-            {gps.status === 'done' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#EAF3DE', borderRadius: 8, padding: '10px 12px' }}>
-                <i className="ti ti-map-pin" style={{ color: '#3B6D11', fontSize: 16 }} />
-                <span style={{ fontSize: 13, color: '#3B6D11', flex: 1 }}>Location set</span>
-                <button type="button" onClick={gps.detect}
-                  style={{ background: 'none', border: 'none', fontSize: 12, color: '#3B6D11', cursor: 'pointer', textDecoration: 'underline' }}>
-                  Re-detect
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <button type="button" onClick={gps.detect} disabled={gps.status === 'loading'}
-                  style={{ width: '100%', background: '#f4f4f2', border: '0.5px solid #ccc', borderRadius: 10, padding: '10px 14px', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#555' }}>
-                  <i className={gps.status === 'loading' ? 'ti ti-loader' : 'ti ti-map-pin'} />
-                  {gps.status === 'loading' ? 'Detecting...' : 'Use my GPS location'}
-                </button>
-                {gps.gpsError && <p style={{ fontSize: 12, color: '#E24B4A', margin: 0 }}>{gps.gpsError}</p>}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#bbb', fontSize: 12 }}>
-                  <div style={{ flex: 1, height: 1, background: '#eee' }} />
-                  or enter address
-                  <div style={{ flex: 1, height: 1, background: '#eee' }} />
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    type="text"
-                    value={manualAddress}
-                    onChange={e => setManualAddress(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), geocodeAddress())}
-                    placeholder="e.g. 860 5th Ave, San Diego CA"
-                    style={{ flex: 1, padding: '10px 12px', border: '0.5px solid #ccc', borderRadius: 10, fontSize: 14, outline: 'none' }}
-                  />
-                  <button type="button" onClick={geocodeAddress} disabled={geocoding || !manualAddress.trim()}
-                    style={{ background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 10, padding: '0 14px', fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    {geocoding ? '...' : 'Find'}
-                  </button>
-                </div>
-              </div>
-            )}
-            <p style={{ fontSize: 12, color: '#aaa', marginTop: 5 }}>Used to match you with nearby job leads</p>
-          </div>
-
           {error && <p style={{ color: '#E24B4A', fontSize: 13 }}>{error}</p>}
           <button type="submit" disabled={loading}
             style={{ background: '#0F4C8A', color: '#fff', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 500, marginTop: 4 }}>
