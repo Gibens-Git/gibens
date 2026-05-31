@@ -4,7 +4,8 @@ import type { Notification } from '@gibens/supabase'
 
 export function useNotifications(userId: string | undefined) {
   const [notifications, setNotifications] = useState<Notification[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadMessages, setUnreadMessages] = useState(0)
+  const [unreadBids, setUnreadBids] = useState(0)
   const [toast, setToast] = useState<Notification | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -30,7 +31,8 @@ export function useNotifications(userId: string | undefined) {
       .then(({ data }) => {
         if (data) {
           setNotifications(data)
-          setUnreadCount(data.filter(n => !n.is_read && (n.type === 'new_message' || n.type === 'bid_accepted')).length)
+          setUnreadMessages(data.filter(n => !n.is_read && n.type === 'new_message').length)
+          setUnreadBids(data.filter(n => !n.is_read && n.type === 'bid_accepted').length)
           lastNotifAt.current = data.length > 0 ? data[0].created_at : startedAt
         } else {
           lastNotifAt.current = startedAt
@@ -41,7 +43,8 @@ export function useNotifications(userId: string | undefined) {
     const channel = subscribeToNotifications(userId, (n) => {
       const notif = n as Notification
       setNotifications(prev => [notif, ...prev])
-      if (notif.type === 'new_message' || notif.type === 'bid_accepted') setUnreadCount(c => c + 1)
+      if (notif.type === 'new_message') setUnreadMessages(c => c + 1)
+      if (notif.type === 'bid_accepted') setUnreadBids(c => c + 1)
       lastNotifAt.current = notif.created_at
       showToast(notif)
     })
@@ -65,15 +68,21 @@ export function useNotifications(userId: string | undefined) {
         showToast(incoming[incoming.length - 1])
       }
 
-      // Re-count unread so badge clears when notifications are read
-      const { count } = await supabase
+      const { count: msgCount } = await supabase
         .from('notifications')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .in('type', ['new_message', 'bid_accepted'])
+        .eq('type', 'new_message')
         .eq('is_read', false)
+      if (msgCount !== null) setUnreadMessages(msgCount)
 
-      if (count !== null) setUnreadCount(count)
+      const { count: bidCount } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('type', 'bid_accepted')
+        .eq('is_read', false)
+      if (bidCount !== null) setUnreadBids(bidCount)
     }, 8000)
 
     return () => {
@@ -86,7 +95,6 @@ export function useNotifications(userId: string | undefined) {
   const markRead = async (id: string) => {
     await supabase.from('notifications').update({ is_read: true }).eq('id', id)
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
-    setUnreadCount(c => Math.max(0, c - 1))
   }
 
   const dismissToast = () => {
@@ -94,5 +102,5 @@ export function useNotifications(userId: string | undefined) {
     if (toastTimer.current) clearTimeout(toastTimer.current)
   }
 
-  return { notifications, unreadCount, markRead, toast, dismissToast }
+  return { notifications, unreadMessages, unreadBids, markRead, toast, dismissToast }
 }
