@@ -38,14 +38,13 @@ export default function JobDetail() {
       setBids(bidsData || [])
       setLoading(false)
     })
-    // Mark new_bid notifications for this job as read when customer opens it
+    // Mark new_bid notifications as read when customer opens a job
     if (user?.id) {
       supabase.from('notifications')
         .update({ is_read: true })
         .eq('user_id', user.id)
         .eq('type', 'new_bid')
         .eq('is_read', false)
-        .contains('data', { job_id: jobId })
         .then(() => {})
     }
   }, [jobId, user?.id])
