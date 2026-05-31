@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getJobDetail, createBid, updateBid, getVendorBidForJob, supabase } from '@gibens/supabase'
+import { getJobDetail, createBid, updateBid, getVendorBidForJob } from '@gibens/supabase'
 import { pricingLabels, urgencyLabels, getBookingFee, formatCurrency } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { Job } from '@gibens/supabase'
@@ -77,18 +77,7 @@ export default function SubmitBid() {
         est_duration: form.est_duration,
       })
       if (err) { setError(err.message); setLoading(false) }
-      else {
-        if (job?.customer_id && bidData) {
-          await supabase.from('notifications').insert({
-            user_id: job.customer_id,
-            type: 'new_bid',
-            title: 'New bid received',
-            body: `A pro placed a bid of $${amount} on your job: ${job.title}`,
-            data: { job_id: jobId },
-          })
-        }
-        nav('/bids')
-      }
+      else nav('/bids')
     }
   }
 
