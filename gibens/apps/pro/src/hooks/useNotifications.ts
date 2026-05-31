@@ -30,7 +30,7 @@ export function useNotifications(userId: string | undefined) {
       .then(({ data }) => {
         if (data) {
           setNotifications(data)
-          setUnreadCount(data.filter(n => !n.is_read && n.type === 'new_message').length)
+          setUnreadCount(data.filter(n => !n.is_read && (n.type === 'new_message' || n.type === 'bid_accepted')).length)
           lastNotifAt.current = data.length > 0 ? data[0].created_at : startedAt
         } else {
           lastNotifAt.current = startedAt
@@ -41,7 +41,7 @@ export function useNotifications(userId: string | undefined) {
     const channel = subscribeToNotifications(userId, (n) => {
       const notif = n as Notification
       setNotifications(prev => [notif, ...prev])
-      if (notif.type === 'new_message') setUnreadCount(c => c + 1)
+      if (notif.type === 'new_message' || notif.type === 'bid_accepted') setUnreadCount(c => c + 1)
       lastNotifAt.current = notif.created_at
       showToast(notif)
     })
@@ -65,12 +65,12 @@ export function useNotifications(userId: string | undefined) {
         showToast(incoming[incoming.length - 1])
       }
 
-      // Re-count unread messages so badge clears when chat is opened elsewhere
+      // Re-count unread so badge clears when notifications are read
       const { count } = await supabase
         .from('notifications')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .eq('type', 'new_message')
+        .in('type', ['new_message', 'bid_accepted'])
         .eq('is_read', false)
 
       if (count !== null) setUnreadCount(count)
