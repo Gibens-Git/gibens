@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getJobDetail, getJobBidsDetail, acceptBid, deleteJob, markJobComplete, createReview, getMyReviewForJob, uploadReviewPhoto, supabase } from '@gibens/supabase'
+import { getJobDetail, getJobBidsDetail, acceptBid, deleteJob, markJobComplete, createReview, getMyReviewForJob, uploadReviewPhoto } from '@gibens/supabase'
 import { getAvatarColor, getInitials, formatCurrency, formatRelative, pricingLabels, statusLabels } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { Job, Bid } from '@gibens/supabase'
@@ -62,13 +62,6 @@ export default function JobDetail() {
       setJob(prev => prev ? { ...prev, status: 'accepted' } : prev)
       setBids(prev => prev.map(b => b.id === bid.id ? { ...b, status: 'accepted' } : { ...b, status: 'declined' }))
       setAccepting(null)
-      await supabase.from('notifications').insert({
-        user_id: bid.vendor_id,
-        type: 'bid_accepted',
-        title: 'Your bid was accepted!',
-        body: `Your bid of $${bid.amount} on "${job?.title}" was accepted. The customer will be in touch.`,
-        data: { job_id: jobId },
-      })
     } else {
       alert('Error accepting bid: ' + result.error)
       setAccepting(null)
