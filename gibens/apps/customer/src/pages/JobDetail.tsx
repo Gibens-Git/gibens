@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getJobDetail, getJobBidsDetail, acceptBid, deleteJob, markJobComplete, createReview, getMyReviewForJob, uploadReviewPhoto } from '@gibens/supabase'
+import { getJobDetail, getJobBidsDetail, acceptBid, deleteJob, markJobComplete, createReview, getMyReviewForJob, uploadReviewPhoto, supabase } from '@gibens/supabase'
 import { getAvatarColor, getInitials, formatCurrency, formatRelative, pricingLabels, statusLabels } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { Job, Bid } from '@gibens/supabase'
@@ -38,7 +38,17 @@ export default function JobDetail() {
       setBids(bidsData || [])
       setLoading(false)
     })
-  }, [jobId])
+    // Mark new_bid notifications for this job as read when customer opens it
+    if (user?.id) {
+      supabase.from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', user.id)
+        .eq('type', 'new_bid')
+        .eq('is_read', false)
+        .contains('data', { job_id: jobId })
+        .then(() => {})
+    }
+  }, [jobId, user?.id])
 
   useEffect(() => {
     if (!jobId || !user || job?.status !== 'completed' || reviewChecked) return
