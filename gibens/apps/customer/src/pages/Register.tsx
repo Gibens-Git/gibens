@@ -22,7 +22,7 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true); setError('')
-    const { data, error: err } = await signUp(form.email, form.password, form.name, 'customer')
+    const { data, error: err } = await signUp(form.email, form.password, form.name, 'customer', undefined, `${window.location.origin}/login`)
     if (err) { setError(err.message); setLoading(false); return }
     if (data.session && data.user) {
       await supabase.from('users').insert({ id: data.user.id, role: 'customer', full_name: form.name, phone: form.phone || null })
