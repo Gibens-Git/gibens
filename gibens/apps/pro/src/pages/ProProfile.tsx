@@ -190,6 +190,13 @@ export default function ProProfile() {
                   ))}
                 </div>
                 {r.comment && <p style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>{r.comment}</p>}
+                {r.photo_urls && r.photo_urls.length > 0 && (
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                    {r.photo_urls.map((url, i) => (
+                      <img key={i} src={url} alt="" style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, border: '0.5px solid rgba(0,0,0,0.1)' }} />
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
