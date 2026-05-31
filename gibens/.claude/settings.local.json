@@ -44,7 +44,12 @@
       "Bash(gh --version)",
       "Bash(git push *)",
       "Bash(find C:/gibens/gibens -name \"*.ts\" -path \"*/functions/*\" 2>/dev/null | head -20)",
-      "Bash(gh pr create --title 'Fix AI support chat on mobile \\(customer app\\)' --body ' *)"
+      "Bash(gh pr create --title 'Fix AI support chat on mobile \\(customer app\\)' --body ' *)",
+      "Bash(git commit *)",
+      "Read(//c/gibens/gibens/**)",
+      "Bash(gh pr create --title 'Fix AI support chat, vendor profile creation, and pro app improvements' --body ' *)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Users/eranh/AppData/Local/**)"
     ]
   }
 }
