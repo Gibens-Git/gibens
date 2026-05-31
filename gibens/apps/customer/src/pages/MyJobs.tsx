@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getCustomerJobs } from '@gibens/supabase'
+import { getCustomerJobs, supabase } from '@gibens/supabase'
 import { formatRelative, statusLabels, CATEGORIES } from '@gibens/ui'
 import { useAuth } from '../hooks/useAuth'
 import type { Job } from '@gibens/supabase'
@@ -22,6 +22,8 @@ export default function MyJobs() {
   useEffect(() => {
     if (!user) return
     getCustomerJobs(user.id).then(({ data }) => { setJobs(data || []); setLoading(false) })
+    supabase.from('notifications').update({ is_read: true })
+      .eq('user_id', user.id).eq('type', 'new_bid').eq('is_read', false).then(() => {})
   }, [user])
 
   return (
@@ -70,7 +72,7 @@ export default function MyJobs() {
                 <span>{cat?.name || job.category}</span>
                 <span>{formatRelative(job.created_at)}</span>
               </div>
-              {job.bid_count > 0 && (
+              {job.bid_count > 0 && job.status !== 'completed' && job.status !== 'accepted' && (
                 <p style={{ fontSize: 12, color: '#E8520A', marginTop: 6, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
                   <i className="ti ti-gavel" /> {job.bid_count} bid{job.bid_count > 1 ? 's' : ''} received
                 </p>
