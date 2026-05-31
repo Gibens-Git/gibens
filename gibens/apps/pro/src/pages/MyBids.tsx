@@ -20,6 +20,8 @@ export default function MyBids() {
     getVendorBids(user.id).then(({ data }) => { setBids(data || []); setLoading(false) })
     supabase.from('reviews').select('job_id').eq('reviewer_id', user.id)
       .then(({ data }) => { if (data) setReviewedJobIds(new Set(data.map(r => r.job_id))) })
+    supabase.from('notifications').update({ is_read: true })
+      .eq('user_id', user.id).eq('type', 'bid_accepted').eq('is_read', false).then(() => {})
   }, [user])
 
   const openForm = (bidId: string) =>
