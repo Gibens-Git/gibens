@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { createJob, uploadJobPhoto, supabase } from '@gibens/supabase'
 import { CATEGORIES, urgencyLabels } from '@gibens/ui'
@@ -17,18 +17,21 @@ export default function PostJob() {
   const { user } = useAuth()
   const { location, loading: locLoading, error: locError } = useLocation()
 
+  const savedForm = (() => { try { return JSON.parse(sessionStorage.getItem('postjob_form') || 'null') } catch { return null } })()
   const [form, setForm] = useState({
-    category: params.get('category') || '',
-    title: '',
-    description: '',
-    address_text: '',
-    budget: '',
-    urgency: 'flexible',
+    category: params.get('category') || savedForm?.category || '',
+    title: savedForm?.title || '',
+    description: savedForm?.description || '',
+    address_text: savedForm?.address_text || '',
+    budget: savedForm?.budget || '',
+    urgency: savedForm?.urgency || 'flexible',
   })
   const [photos, setPhotos] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => { sessionStorage.setItem('postjob_form', JSON.stringify(form)) }, [form])
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }))
@@ -95,6 +98,7 @@ export default function PostJob() {
         }).catch(() => {})
       })
 
+      sessionStorage.removeItem('postjob_form')
       nav(`/jobs/${data.id}`)
     } catch (err: unknown) {
       setError((err as Error).message || 'Something went wrong — please try again.')
