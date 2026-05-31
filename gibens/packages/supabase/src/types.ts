@@ -112,6 +112,7 @@ export interface Review {
   reviewee_id: string
   rating: number
   comment: string | null
+  photo_urls?: string[]
   created_at: string
 }
 
