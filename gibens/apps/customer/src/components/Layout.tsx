@@ -4,14 +4,14 @@ import { useNotifications } from '../hooks/useNotifications'
 
 export default function Layout() {
   const { user } = useAuth()
-  const { unreadCount, toast, dismissToast } = useNotifications(user?.id)
+  const { unreadMessages, unreadBids, toast, dismissToast } = useNotifications(user?.id)
   const loc = useLocation()
   const nav = useNavigate()
 
   const tabs = [
     { to: '/',         icon: 'home',           label: 'Home'     },
-    { to: '/jobs',     icon: 'clipboard-list',  label: 'My Jobs'  },
-    { to: '/messages', icon: 'message-circle',  label: 'Messages', badge: unreadCount },
+    { to: '/jobs',     icon: 'clipboard-list',  label: 'My Jobs',  badge: unreadBids },
+    { to: '/messages', icon: 'message-circle',  label: 'Messages', badge: unreadMessages },
     { to: '/support',  icon: 'headset',         label: 'Support'  },
     { to: '/profile',  icon: 'user',            label: 'Profile'  },
   ]
@@ -27,7 +27,11 @@ export default function Layout() {
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
             {(toast.data as Record<string, string>)?.job_id && (
-              <button onClick={() => { nav(`/chat/${(toast.data as Record<string, string>).job_id}`); dismissToast() }}
+              <button onClick={() => {
+                const jobId = (toast.data as Record<string, string>).job_id
+                nav(toast.type === 'new_bid' ? `/jobs/${jobId}` : `/chat/${jobId}`)
+                dismissToast()
+              }}
                 style={{ background: '#E8520A', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                 View
               </button>
